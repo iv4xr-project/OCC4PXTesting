@@ -48,10 +48,15 @@ public class PlayerOneCharacterization extends UserCharacterization {
 	static int maxScore = 620 ; // 20 buttons, 2 goal-flags
 	
 	/**
-	 * Modeling the effect of various events in terms of how they affect the goals.
+	 * Modeling the effect of various non-tick events in terms of how they affect the goals.
 	 */
 	@Override
 	public void eventEffect(Event e, BeliefBase beliefbase) {
+	    
+	    if (!(e instanceof LREvent)) {
+	        // ignore if not LR-event
+	        return ;
+	    }
 		
 		EmotionBeliefBase bbs = (EmotionBeliefBase) beliefbase ;
 		int health = bbs.functionalstate.worldmodel.health ;
@@ -61,10 +66,12 @@ public class PlayerOneCharacterization extends UserCharacterization {
 		GoalStatus gGAMP_status = bbs.getGoalsStatus().goalStatus(gotAsMuchPointsAsPossible.name) ;
 		
 		// logic for Ouch-event:
-		if (e instanceof OuchEvent) effectOfOuchEvent(beliefbase) ;
-		else if (e instanceof OpeningADoorEvent) effectOfOpeningADoorEvent(beliefbase) ;
-		else if (e instanceof GetPointEvent) effectOfGetPointEvent(beliefbase) ;
-		else if (e instanceof LevelCompletedEvent) effectOfLevelCompletedEvent(beliefbase) ;
+		switch(e.name) {
+		  case OuchEventName         : effectOfOuchEvent(beliefbase) ; break ;
+		  case OpeningADoorEventName : effectOfOpeningADoorEvent(beliefbase) ; break ;
+		  case GetPointEventName     : effectOfGetPointEvent(beliefbase) ; break ;
+		  case LevelCompletedEventName : effectOfLevelCompletedEvent(beliefbase) ; break ;
+		}
 	}
 	
 	private void effectOfOuchEvent(BeliefBase beliefbase) {

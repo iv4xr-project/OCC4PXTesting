@@ -28,6 +28,8 @@ import helperclasses.datastructures.linq.QArrayList;
 import logger.JsonLoggerInstrument;
 import nl.uu.cs.aplib.mainConcepts.Environment;
 import nl.uu.cs.aplib.mainConcepts.GoalStructure;
+import nl.uu.cs.aplib.multiAgentSupport.Message;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
@@ -40,8 +42,7 @@ import org.junit.jupiter.api.Test;
 import game.Platform;
 import game.LabRecruitsTestServer;
 import world.BeliefState;
-import static helperclasses.GraphPlotter.*;
-import static helperclasses.CSVExport.*;
+import static eu.iv4xr.ux.pxtesting.CSVExport.*;
 import java.io.File;
 import static eu.iv4xr.ux.pxtesting.TestSettings.*;
 import static nl.uu.cs.aplib.AplibEDSL.*;
@@ -66,6 +67,7 @@ public class PX_Testing_SimplerExperiment_1 {
 
     private static LabRecruitsTestServer labRecruitsTestServer;
     private static String labRecruitesExeRootDir;
+    
     @BeforeAll
     static void start() {
         // TestSettings.USE_SERVER_FOR_TEST = false ;
@@ -74,6 +76,7 @@ public class PX_Testing_SimplerExperiment_1 {
         //Changing the root directory
         //It needs to point at the iv4xrDemo directory for the game execution, instead of the current directory. 
         String labRecruitesExeRootParent = new File(System.getProperty("user.dir")).getParent();
+        //String labRecruitesExeRootParent = new File(System.getProperty("user.dir")).getParentFile().getParent();
         labRecruitesExeRootDir= new File(labRecruitesExeRootParent,"iv4xrDemo").getAbsolutePath();
         labRecruitsTestServer = TestSettings.start_LabRecruitsTestServer(labRecruitesExeRootDir);
     }
@@ -185,12 +188,15 @@ public class PX_Testing_SimplerExperiment_1 {
                 Vec3 position = testAgent.getState().worldmodel.position;
                 System.out.println("*** " + i + ", " + testAgent.getState().id + " @" + position);
                 eventsProducer.generateCurrentEvents();
-                if (eventsProducer.currentEvents.isEmpty())
-                    eventsProducer.currentEvents.add(new Tick());
-
-                for (Event e : eventsProducer.currentEvents) {
-                    eas.update(e, i);
+                if (eventsProducer.currentEvents.isEmpty()) {
+                    eas.update(new Tick(), i);
                 }
+                else {
+                    for (Message m : eventsProducer.currentEvents) {
+                        eas.update( new LREvent(m.getMsgName()), i);
+                    }
+                }
+                
                 if (position != null) {
                     Vec3 p_ = position.copy();
                     p_.z = 8 - p_.z;
