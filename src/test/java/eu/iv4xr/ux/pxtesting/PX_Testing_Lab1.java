@@ -5,6 +5,7 @@ at Utrecht University within the Software and Game project course.
 ©Copyright Utrecht University (Department of Information and Computing Sciences)
 */
 
+
 package eu.iv4xr.ux.pxtesting;
 import agents.EventsProducer;
 import agents.LabRecruitsTestAgent;
@@ -62,22 +63,23 @@ import java.nio.file.Paths;
  * script to visualize the results.
  */
 
-public class PX_Testing_Experiment_2 {
+public class PX_Testing_Lab1 {
 
     private static LabRecruitsTestServer labRecruitsTestServer;
     private static String labRecruitesExeRootDir;
-
+    
     @BeforeAll
     static void start() {
         // TestSettings.USE_SERVER_FOR_TEST = false ;
         // Uncomment this to make the game's graphic visible:
-        TestSettings.USE_GRAPHICS = true;
-        //IT reads from Implementation/iv4XRDemo
+        TestSettings.USE_GRAPHICS = true; 
+        //Changing the root directory
+        //It needs to point at the iv4xrDemo directory for the game execution, instead of the current directory. 
         String labRecruitesExeRootParent = new File(System.getProperty("user.dir")).getParent();
+        //String labRecruitesExeRootParent = new File(System.getProperty("user.dir")).getParentFile().getParent();
         labRecruitesExeRootDir= new File(labRecruitesExeRootParent,"iv4xrDemo").getAbsolutePath();
         labRecruitsTestServer = TestSettings.start_LabRecruitsTestServer(labRecruitesExeRootDir);
     }
-
     
 
     @AfterAll
@@ -89,16 +91,28 @@ public class PX_Testing_Experiment_2 {
     void instrument(Environment env) {
         env.registerInstrumenter(new JsonLoggerInstrument()).turnOnDebugInstrumentation();
     }
+    GoalStructure open_and_check_doors(LabRecruitsTestAgent testAgent, String activatingButton, String... doors) {
 
+        GoalStructure[] subgoals = new GoalStructure[1 + 2 * doors.length];
+        subgoals[0] = GoalLib.entityInteracted(activatingButton);
+        for (int k = 0; k < doors.length; k++) {
+            int i = 2 * k + 1;
+            String doorId = doors[k];
+            subgoals[i] = GoalLib.entityStateRefreshed(doorId);
+            subgoals[i + 1] = GoalLib.entityInvariantChecked(testAgent, doorId, "" + doorId + " should be open",
+                    (WorldEntity e) -> e.getBooleanProperty("isOpen"));
+        }
+        return SEQ(subgoals);
+    }
     /**
      * Run a Player Experience evaluation on the selected variant of the
-     * buttons_doors_1 level. Emotion data are dumped in csv files.
+     * Lab1
      */
     @Test
     public void runPXEvaluation() throws InterruptedException, IOException {
         // choose your setup here:
         // closetReachableTest("buttons_doors_1_setup1") ;
-        runPXEvaluation("HZRDIndirect");
+        runPXEvaluation("lab1");
 
     }
 
@@ -108,12 +122,9 @@ public class PX_Testing_Experiment_2 {
      */
     public void runPXEvaluation(String button_doors1_setup) throws InterruptedException, IOException {
 
-        // var buttonToTest = "button1" ;
-        // var doorToTest = "door1" ;
 
-        // Create an environment
-    	var config = new LabRecruitsConfig(button_doors1_setup, Paths.get(labRecruitesExeRootDir, "src", "test", "resources", "levels").toAbsolutePath().toString())        . replaceAgentMovementSpeed(0.2f)
-		. replaceLightIntensity(0.3f);
+    	var config = new LabRecruitsConfig(button_doors1_setup, Paths.get(labRecruitesExeRootDir, "src", "test", "resources", "levels").toAbsolutePath().toString());
+    	config.light_intensity = 0.3f;
         var environment = new LabRecruitsEnvironment(config);
         if (USE_INSTRUMENT)
             instrument(environment);
@@ -125,26 +136,21 @@ public class PX_Testing_Experiment_2 {
             }
 
             // create a test agent
-            var testAgent = new LabRecruitsTestAgent("0", "") // matches the ID in the CSV file
+            var testAgent = new LabRecruitsTestAgent("agent0") // matches the ID in the CSV file
                     .attachState(new BeliefState()).attachEnvironment(environment);
-
+            
             // we will use the following fiunctional testing task to steer the agent
             // to solve the level. The final goal is to get the agent into a goal-room.
-            // This room as an escape room. 
-			
-			
-			
-			  var testingTask= SEQ( GoalLib.positionsVisited(new Vec3(6,0,5), new
-			  Vec3(8,0,1), new Vec3(13,4,1)), GoalLib.entityInteracted("b4.1"),
-			  GoalLib.positionsVisited(new Vec3(13,4,3)), GoalLib.entityInteracted("b7.1"),
-			  GoalLib.positionsVisited(new Vec3(9,4,9), new Vec3(8,4,6), new Vec3(5,4,7)),
-			  GoalLib.entityInteracted("b8.2"), GoalLib.positionsVisited(new Vec3(1,4,13)),
-			  GoalLib.entityInteracted("b5.1"), GoalLib.positionsVisited(new Vec3(1,4,22),
-			  new Vec3(6,0,22)), GoalLib.entityInteracted("b1.1"),
-			  GoalLib.positionsVisited(new Vec3(6,0,26)));
-			  
-			  
-			
+            // This this room as an escape room. 
+            var testingTask = SEQ(open_and_check_doors(testAgent, "b_hall_1", "d_store_e"),
+                    open_and_check_doors(testAgent, "b_store", "d_store_n", "d_sidehall"),
+                    GoalLib.entityInteracted("b_secret_1"),
+                    open_and_check_doors(testAgent, "b_side", "d_sidehall", "d_lab_w", "d_bcroom"),
+                    open_and_check_doors(testAgent, "b_secret_2", "d_closet"),
+                    open_and_check_doors(testAgent, "b_closet", "d_theater_s", "d_theater_e"),
+                    open_and_check_doors(testAgent, "b_lab_e", "d_tofinish"),
+                    open_and_check_doors(testAgent, "b_finish", "d_finish"), GoalLib.positionsVisited(new Vec3(1,0,17)));
+            
             // attaching the goal and testdata-collector
             var dataCollector = new TestDataCollector();
             testAgent.setTestDataCollector(dataCollector).setGoal(testingTask);
@@ -178,13 +184,14 @@ public class PX_Testing_Experiment_2 {
                 System.out.println("*** " + i + ", " + testAgent.getState().id + " @" + position);
                 eventsProducer.generateCurrentEvents();
                 if (eventsProducer.currentEvents.isEmpty()) {
-                	eas.update(new Tick(), i);
+                    eas.update(new Tick(), i);
                 }
                 else {
                     for (Message m : eventsProducer.currentEvents) {
                         eas.update( new LREvent(m.getMsgName()), i);
                     }
                 }
+                
                 if (position != null) {
                     Vec3 p_ = position.copy();
                     p_.z = 8 - p_.z;
@@ -218,10 +225,10 @@ public class PX_Testing_Experiment_2 {
                     csvData_goalQuestIsCompleted.add(csvRow1);
                     csvData_goalGetMuchPoints.add(csvRow2);
                 }
-                Thread.sleep(70);
+                Thread.sleep(50);
                 i++;
                 testAgent.update();
-                if (i > 300) {
+                if (i > 800) {
                     break;
                 }
             }
@@ -231,6 +238,7 @@ public class PX_Testing_Experiment_2 {
             assertTrue(testAgent.success());
             // close
             testAgent.printStatus();
+
             // done. Dump the collected data to csv files:
             exportToCSV(csvData_goalQuestIsCompleted, "data_goalQuestCompleted.csv");
             exportToCSV(csvData_goalGetMuchPoints, "data_goalGetMuchPoints.csv");

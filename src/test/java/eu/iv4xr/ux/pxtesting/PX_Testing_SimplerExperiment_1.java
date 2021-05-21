@@ -72,12 +72,15 @@ public class PX_Testing_SimplerExperiment_1 {
     static void start() {
         // TestSettings.USE_SERVER_FOR_TEST = false ;
         // Uncomment this to make the game's graphic visible:
-        TestSettings.USE_GRAPHICS = true; 
+        //TestSettings.USE_GRAPHICS = true; 
         //Changing the root directory
         //It needs to point at the iv4xrDemo directory for the game execution, instead of the current directory. 
         String labRecruitesExeRootParent = new File(System.getProperty("user.dir")).getParent();
+        //String labRecruitesExeRootParent = new File(System.getProperty("user.dir")).getPath();
         //String labRecruitesExeRootParent = new File(System.getProperty("user.dir")).getParentFile().getParent();
+        System.out.print(labRecruitesExeRootParent);
         labRecruitesExeRootDir= new File(labRecruitesExeRootParent,"iv4xrDemo").getAbsolutePath();
+        System.out.print(labRecruitesExeRootDir);
         labRecruitsTestServer = TestSettings.start_LabRecruitsTestServer(labRecruitesExeRootDir);
     }
     
@@ -230,7 +233,7 @@ public class PX_Testing_SimplerExperiment_1 {
                     csvData_goalQuestIsCompleted.add(csvRow1);
                     csvData_goalGetMuchPoints.add(csvRow2);
                 }
-                Thread.sleep(50);
+                Thread.sleep(70);
                 i++;
                 testAgent.update();
                 if (i > 200) {
