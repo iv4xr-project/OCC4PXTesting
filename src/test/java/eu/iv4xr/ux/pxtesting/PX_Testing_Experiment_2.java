@@ -117,13 +117,13 @@ public class PX_Testing_Experiment_2 {
      * Run a Player Experience evaluation on specified variant of the
      * buttons_doors_1 level. Emotion data are dumped in csv files.
      */
-    public void runPXEvaluation(String button_doors1_setup) throws InterruptedException, IOException {
+    public void runPXEvaluation(String setup) throws InterruptedException, IOException {
 
         // var buttonToTest = "button1" ;
         // var doorToTest = "door1" ;
 
         // Create an environment
-    	var config = new LabRecruitsConfig(button_doors1_setup, Paths.get(labRecruitesExeRootDir, "src", "test", "resources", "levels").toAbsolutePath().toString())        . replaceAgentMovementSpeed(0.2f)
+    	var config = new LabRecruitsConfig(setup, Paths.get(labRecruitesExeRootDir, "src", "test", "resources", "levels").toAbsolutePath().toString())        . replaceAgentMovementSpeed(0.2f)
 		. replaceLightIntensity(0.3f);
         var environment = new LabRecruitsEnvironment(config);
         if (USE_INSTRUMENT)
