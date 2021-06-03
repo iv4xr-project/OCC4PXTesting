@@ -32,10 +32,11 @@ import nl.uu.cs.aplib.multiAgentSupport.Message;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.IOException;
+import java.io.*;  
 import java.util.*;
 import java.util.function.Function;
-
+import javax.script.ScriptContext;
+import javax.script.SimpleScriptContext;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -43,11 +44,16 @@ import game.Platform;
 import game.LabRecruitsTestServer;
 import world.BeliefState;
 import static eu.iv4xr.ux.pxtesting.CSVExport.*;
-import java.io.File;
 import static eu.iv4xr.ux.pxtesting.TestSettings.*;
 import static nl.uu.cs.aplib.AplibEDSL.*;
 import java.nio.file.Paths;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptEngineFactory;
 
+import java.util.List;
+
+import org.apache.commons.io.IOUtils;
 /**
  * This class runs an OCC-based Player Experience (PX) evaluation on two
  * variations of the buttons_doors_1 level. (you have to specify which variant
@@ -67,7 +73,8 @@ public class PX_Testing_Lab1 {
 
     private static LabRecruitsTestServer labRecruitsTestServer;
     private static String labRecruitesExeRootDir;
-    
+    private static Integer level_height;
+    private static Integer level_width;
     @BeforeAll
     static void start() {
         // TestSettings.USE_SERVER_FOR_TEST = false ;
@@ -112,8 +119,11 @@ public class PX_Testing_Lab1 {
     public void runPXEvaluation() throws InterruptedException, IOException {
         // choose your setup here:
         // closetReachableTest("buttons_doors_1_setup1") ;
+    	// choose your setup here:
+    	//set the level size: 
+        level_width=26;
+        level_height=31;
         runPXEvaluation("lab1");
-
     }
 
     /**
@@ -194,7 +204,7 @@ public class PX_Testing_Lab1 {
                 
                 if (position != null) {
                     Vec3 p_ = position.copy();
-                    p_.z = 8 - p_.z;
+                    //p_.z = 8 - p_.z;
                     Float score = (float) testAgent.getState().worldmodel.score;
                     System.out.println("*** score=" + score);
 
@@ -242,8 +252,25 @@ public class PX_Testing_Lab1 {
             // done. Dump the collected data to csv files:
             exportToCSV(csvData_goalQuestIsCompleted, "data_goalQuestCompleted.csv");
             exportToCSV(csvData_goalGetMuchPoints, "data_goalGetMuchPoints.csv");
+            // run the python script called "mkgraph.py" for drawing graphs according to the saved .csv  
+            String path=new File(new File(System.getProperty("user.dir")).getAbsolutePath(),"mkgraph.py").getAbsolutePath();
+			ProcessBuilder builder = new ProcessBuilder(); 
+			ProcessBuilder pb = new ProcessBuilder();
+			//sending width and heights of the level as parameters.
+			builder.command("python", path,""+level_width,""+level_height);
+			Process p=builder.start();
+			BufferedReader bfr = new BufferedReader(new InputStreamReader(p.getInputStream()));
+	
+			System.out.println(".........start   visualization process.........");  
+		    String line = "";     
+		    while ((line = bfr.readLine()) != null){
+			      System.out.println("Python Output: " + line);
+			  }
         } finally {
-            environment.close();
+            environment.close(); 
+
+
+            	
         }
     }
 }

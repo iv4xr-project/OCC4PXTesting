@@ -43,8 +43,8 @@ public class PlayerOneCharacterization extends UserCharacterization {
 	 *  we need to alter the keyDoor for every level.
 	 */
 	//static String KeyDoor = "door3" ; //SimplerExperiment_1
-	//static String KeyDoor = "d1" ; //Experiment_2
-	static String KeyDoor="d_finish";  //Lab1
+	static String KeyDoor = "d1" ; //Experiment_2
+	//static String KeyDoor="d_finish";  //Lab1
 	static String GoalIten = "levelEnd" ;
 	static int maxScore = 620 ; // 20 buttons, 2 goal-flags for SimpleExperiemnt_1   //need to be changed for everylevel!!!
 	

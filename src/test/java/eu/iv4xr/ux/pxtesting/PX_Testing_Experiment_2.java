@@ -32,6 +32,7 @@ import nl.uu.cs.aplib.multiAgentSupport.Message;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
 import java.util.function.Function;
 
@@ -42,7 +43,11 @@ import game.Platform;
 import game.LabRecruitsTestServer;
 import world.BeliefState;
 import static eu.iv4xr.ux.pxtesting.CSVExport.*;
+
+import java.io.BufferedReader;
 import java.io.File;
+
+
 import static eu.iv4xr.ux.pxtesting.TestSettings.*;
 import static nl.uu.cs.aplib.AplibEDSL.*;
 import java.nio.file.Paths;
@@ -66,6 +71,8 @@ public class PX_Testing_Experiment_2 {
 
     private static LabRecruitsTestServer labRecruitsTestServer;
     private static String labRecruitesExeRootDir;
+    private static int level_height;
+    private static int level_width;
 
     @BeforeAll
     static void start() {
@@ -96,10 +103,14 @@ public class PX_Testing_Experiment_2 {
      */
     @Test
     public void runPXEvaluation() throws InterruptedException, IOException {
-        // choose your setup here:
-        // closetReachableTest("buttons_doors_1_setup1") ;
+        
+    	//write the level size
+        level_width=15;
+        level_height=28;
+    	// choose your setup here:
         runPXEvaluation("HZRDIndirect");
 
+        		
     }
 
     /**
@@ -187,7 +198,7 @@ public class PX_Testing_Experiment_2 {
                 }
                 if (position != null) {
                     Vec3 p_ = position.copy();
-                    p_.z = 8 - p_.z;
+                    //p_.z =  - p_.z;
                     Float score = (float) testAgent.getState().worldmodel.score;
                     System.out.println("*** score=" + score);
 
@@ -217,6 +228,7 @@ public class PX_Testing_Experiment_2 {
 
                     csvData_goalQuestIsCompleted.add(csvRow1);
                     csvData_goalGetMuchPoints.add(csvRow2);
+
                 }
                 Thread.sleep(70);
                 i++;
@@ -226,7 +238,7 @@ public class PX_Testing_Experiment_2 {
                 }
             }
             testingTask.printGoalStructureStatus();
-
+            
             // goal status should be success
             assertTrue(testAgent.success());
             // close
@@ -234,6 +246,23 @@ public class PX_Testing_Experiment_2 {
             // done. Dump the collected data to csv files:
             exportToCSV(csvData_goalQuestIsCompleted, "data_goalQuestCompleted.csv");
             exportToCSV(csvData_goalGetMuchPoints, "data_goalGetMuchPoints.csv");
+            
+            // run the python script called "mkgraph.py" for drawing graphs according to the saved .csv  
+            String path=new File(new File(System.getProperty("user.dir")).getAbsolutePath(),"mkgraph.py").getAbsolutePath();
+			ProcessBuilder builder = new ProcessBuilder(); 
+			ProcessBuilder pb = new ProcessBuilder();
+			//sending width and heights of level as parameters.
+			builder.command("python", path,""+level_width,""+level_height);
+			Process p=builder.start();
+			BufferedReader bfr = new BufferedReader(new InputStreamReader(p.getInputStream()));
+	
+			System.out.println(".........start   visualization process.........");  
+		    String line = "";     
+		    while ((line = bfr.readLine()) != null){
+			      System.out.println("Python Output: " + line);
+			  }
+
+            
         } finally {
             environment.close();
         }
