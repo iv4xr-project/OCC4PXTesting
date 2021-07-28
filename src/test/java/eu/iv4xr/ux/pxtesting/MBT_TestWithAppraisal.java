@@ -423,8 +423,7 @@ public class MBT_TestWithAppraisal {
             System.out.println("HIT anykey") ;
             in.nextLine() ; */
         
-            labRecruitsEnvironment.close() ;
-            
+            labRecruitsEnvironment.close() ;           
             results += ">> tc-" + i + ", Duration: "+ t + ", goalstatus: " + g.getStatus() 
                + ", #fail: " + testAgent.getTestDataCollector().getNumberOfFailVerdictsSeen()
                + ", #success: " + testAgent.getTestDataCollector().getNumberOfPassVerdictsSeen() + "\n" ;
