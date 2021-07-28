@@ -1,12 +1,18 @@
 package eu.iv4xr.ux.pxtesting;
 
 import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.function.Function;
 
 import org.apache.commons.io.FileUtils;
 //import org.apache.maven.shared.utils.io.FileUtils;
@@ -18,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import agents.EventsProducer;
 import agents.LabRecruitsTestAgent;
 import environments.LabRecruitsConfig;
 import environments.LabRecruitsEnvironment;
@@ -32,12 +39,24 @@ import eu.fbk.iv4xr.mbt.testcase.AbstractTestSequence;
 import eu.fbk.iv4xr.mbt.testcase.MBTChromosome;
 import eu.fbk.iv4xr.mbt.testsuite.SuiteChromosome;
 import eu.fbk.iv4xr.mbt.utils.TestSerializationUtils;
+import eu.iv4xr.framework.extensions.occ.Emotion;
+import eu.iv4xr.framework.extensions.occ.EmotionAppraisalSystem;
+import eu.iv4xr.framework.extensions.occ.Emotion.EmotionType;
+import eu.iv4xr.framework.extensions.occ.Event.Tick;
 import eu.iv4xr.framework.mainConcepts.TestDataCollector;
+import eu.iv4xr.framework.spatial.Vec3;
+import eu.iv4xr.ux.pxtesting.PlayerOneCharacterization.EmotionBeliefBase;
 import game.LabRecruitsTestServer;
 import game.Platform;
 import eu.fbk.iv4xr.mbt.execution.labrecruits.LabRecruitsTestSuiteExecutor;
 
 import nl.uu.cs.aplib.mainConcepts.GoalStructure;
+import nl.uu.cs.aplib.multiAgentSupport.Message;
+
+import static eu.iv4xr.ux.pxtesting.CSVExport.exportToCSV;
+import static eu.iv4xr.ux.pxtesting.CSVImport.ImportFromCSV;
+import static eu.iv4xr.ux.pxtesting.PlayerOneCharacterization.gotAsMuchPointsAsPossible;
+import static eu.iv4xr.ux.pxtesting.PlayerOneCharacterization.questIsCompleted;
 import static nl.uu.cs.aplib.AplibEDSL.* ;
 import world.BeliefState;
 import eu.fbk.iv4xr.mbt.Main;
@@ -51,11 +70,10 @@ import eu.fbk.iv4xr.mbt.Main;
  * @author prandi
  *
  */
-public class MBT_Test {
+public class MBT_TestWithAppraisal {
 
 	// use a logger to save output execution information
 	protected static final Logger logger = LoggerFactory.getLogger(Main.class);
-
 	/**
 	 * iv4xr-mbt uses MBTProperties to set properties. In the following method
 	 * explains how to use it
@@ -87,7 +105,7 @@ public class MBT_Test {
 		// MBT has a model factory controlled by the SUT_EFSM property
 		// "labrecruits.random_default" generate a lab recruits level with parameters
 		// specified above
-		MBTProperties.SUT_EFSM = "labrecruits.random_default";
+		MBTProperties.SUT_EFSM = "labrecruits.random_large";
 		// there are some predefined configuration to pass to MBTProperties.SUT_EFSM
 		// "labrecruits.random_simple", "labrecruits.random_medium",
 		// "labrecruits.random_large"
@@ -240,13 +258,12 @@ public class MBT_Test {
 	}
 	
 	@Test
-    public void runGeneratedTests() {
+    public void runGeneratedTests() throws IOException {
 
 	    String rootFolder = new File(System.getProperty("user.dir")).getParent();
         String testFolder = rootFolder + File.separator + "MBTtest";
         String modelFolder = testFolder + File.separator + "Model";
         String labRecruitesExeRootDir = rootFolder + File.separator + "iv4xrDemo";
-        //String labRecruitesExeRootDir = "/Users/iswbprasetya/workshop/projects/iv4xr/iv4xrDemo/";
 
         // load tests from file
         SuiteChromosome loadedSolution = parseTests(testFolder);
@@ -254,19 +271,14 @@ public class MBT_Test {
         // before converting it is needed a LR test agent
 
         // open the server
-        LabRecruitsTestServer testServer = new LabRecruitsTestServer(true,
+        LabRecruitsTestServer testServer = new LabRecruitsTestServer(false,
                 Platform.PathToLabRecruitsExecutable(labRecruitesExeRootDir));
 
         // set the configuration of the server 
         // level file name is hard coded in writeModel but can be changed
         LabRecruitsConfig lrCfg = new LabRecruitsConfig("LabRecruits_level", modelFolder);
-        // start LabRecruits environment
-        //LabRecruitsEnvironment labRecruitsEnvironment = new LabRecruitsEnvironment(lrCfg);
-
-        // create the agent and attach the goal structure 
-        // the random level generator create agent Agent1
-        //LabRecruitsTestAgent testAgent = new LabRecruitsTestAgent("Agent1") ; 
-
+        levelsize lrsize= new levelsize(CSVImport.ImportFromCSV("LabRecruits_level", modelFolder));
+        
         // convert test cases in loadedSolution to goal structure
         
         // use the test case executor to convert
@@ -290,50 +302,136 @@ public class MBT_Test {
             List<GoalStructure> goals = lrExecutor.convertTestCaseToGoalStructure(testAgent, testcase);
             GoalStructure g =SEQ(goals.toArray(new GoalStructure[goals.size()]));
             
-            
-            
+                        
             System.out.println(">> Testing task: " + i + ", #=" + goals.size()) ;
             System.out.println(">> " + testcase ) ;
             
             testAgent.setGoal(g) ;
+            
+            // add an event-producer to the test agent so that it produce events for
+            // emotion appraisals:
+            EventsProducer eventsProducer = new EventsProducer().attachTestAgent(testAgent);
+
+            // Create an emotion appraiser, and hook it to the agent:
+            EmotionAppraisalSystem eas = new EmotionAppraisalSystem(testAgent.getId());
+            eas.attachEmotionBeliefBase(new EmotionBeliefBase().attachFunctionalState(testAgent.getState()))
+                    .withUserModel(new PlayerOneCharacterization()).addGoal(questIsCompleted, 50)
+                    .addGoal(gotAsMuchPointsAsPossible, 50).addInitialEmotions();
+
+         // some lists for collecting experiment data:
+            List<String[]> csvData_goalQuestIsCompleted = new LinkedList<>();
+            String[] csvRow = { "t", "x", "y", "hope", "joy", "satisfaction", "fear" };
+            csvData_goalQuestIsCompleted.add(csvRow);
+            List<String[]> csvData_goalGetMuchPoints = new LinkedList<>();
+            csvData_goalGetMuchPoints.add(csvRow);
+            Function<Emotion, Float> normalizeIntensity = e -> e != null ? (float) e.intensity / 800f : 0f;
             labRecruitsEnvironment.startSimulation();
             
-            System.out.println("HIT anykey") ;
+            // goal not achieved yet
+            assertFalse(testAgent.success());
+
+           //print every test case before execution
+           /*System.out.println("HIT anykey") ;
             Scanner in = new Scanner(System.in) ;
-            in.nextLine() ;
+            in.nextLine() ; */
             
             int t=0 ;
             while (g.getStatus().inProgress()) {
-                System.out.println("** " + t + ": agent @"
-                        + testAgent.getState().worldmodel.position);
+            	 Vec3 position = testAgent.getState().worldmodel.position;
+                 System.out.println("*** " + t + ", " + testAgent.getState().id + " @" + position);
+                 eventsProducer.generateCurrentEvents();
+                 if (eventsProducer.currentEvents.isEmpty()) {
+                     eas.update(new Tick(), t);
+                 }
+                 else {
+                     for (Message m : eventsProducer.currentEvents) {
+                         eas.update( new LREvent(m.getMsgName()), t);
+                         
+                     }
+                 }
+                 
+                 if (position != null) {
+                     Vec3 p_ = position.copy();
+                     //p_.z = 8 - p_.z;
+                     Float score = (float) testAgent.getState().worldmodel.score;
+                     System.out.println("*** score=" + score);
 
-                testAgent.update();
+                     float hope_completingQuest = normalizeIntensity
+                             .apply(eas.getEmotion(questIsCompleted.name, EmotionType.Hope));
+                     float joy_completingQuest = normalizeIntensity
+                             .apply(eas.getEmotion(questIsCompleted.name, EmotionType.Joy));
+                     float satisfaction_completingQuest = normalizeIntensity
+                             .apply(eas.getEmotion(questIsCompleted.name, EmotionType.Satisfaction));
+                     float fear_completingQuest = normalizeIntensity
+                             .apply(eas.getEmotion(questIsCompleted.name, EmotionType.Fear));
+
+                     float hope_getMuchPoints = normalizeIntensity
+                             .apply(eas.getEmotion(gotAsMuchPointsAsPossible.name, EmotionType.Hope));
+                     float joy_getMuchPoints = normalizeIntensity
+                             .apply(eas.getEmotion(gotAsMuchPointsAsPossible.name, EmotionType.Joy));
+                     float satisfaction_getMuchPoints = normalizeIntensity
+                             .apply(eas.getEmotion(gotAsMuchPointsAsPossible.name, EmotionType.Satisfaction));
+                     float fear_getMuchPoints = normalizeIntensity
+                             .apply(eas.getEmotion(gotAsMuchPointsAsPossible.name, EmotionType.Fear));
+
+                     String[] csvRow1 = { "" + t, "" + p_.x, "" + p_.z, "" + hope_completingQuest,
+                             "" + joy_completingQuest, "" + satisfaction_completingQuest, "" + fear_completingQuest };
+
+                     String[] csvRow2 = { "" + t, "" + p_.x, "" + p_.z, "" + hope_getMuchPoints, "" + joy_getMuchPoints,
+                             "" + satisfaction_getMuchPoints, "" + fear_getMuchPoints };
+
+                     csvData_goalQuestIsCompleted.add(csvRow1);
+                     csvData_goalGetMuchPoints.add(csvRow2);
+                 }
                 if (t>10000) {
                     break ;
                 }
                 try {
                     Thread.sleep(200);
+                    testAgent.update();
                 } catch (InterruptedException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
                 t++ ;
              }
-            g.printGoalStructureStatus();
-            System.out.println(">>> #Fail: " + testAgent.getTestDataCollector().getNumberOfFailVerdictsSeen()) ;
+            
+            exportToCSV(csvData_goalQuestIsCompleted, "data_goalQuestCompleted_"+i+".csv");
+            exportToCSV(csvData_goalGetMuchPoints, "data_goalGetMuchPoints_"+i+".csv");
+            
+            // run the python script called "mkgraph.py" for drawing graphs according to the saved .csv  
+            String path=new File(new File(System.getProperty("user.dir")).getAbsolutePath(),"mkgraph.py").getAbsolutePath();
+			ProcessBuilder builder = new ProcessBuilder(); 
+			ProcessBuilder pb = new ProcessBuilder();
+			
+			//sending the csvfile number, width and heights of the level as parameters.
+			builder.command("python", path,""+i,""+lrsize.getheight(),""+lrsize.getwidth());
+			Process p=builder.start();
+			BufferedReader bfr = new BufferedReader(new InputStreamReader(p.getInputStream()));
+	
+			System.out.println(".........start   visualization process.........");  
+		    String line = "";     
+		    while ((line = bfr.readLine()) != null){
+			      System.out.println("Python Output: " + line);
+		    }
+            
+                   g.printGoalStructureStatus();
+            
+            //check out every execution result one by one
+            /*System.out.println(">>> #Fail: " + testAgent.getTestDataCollector().getNumberOfFailVerdictsSeen()) ;
             System.out.println(">>> #Success: " + testAgent.getTestDataCollector().getNumberOfPassVerdictsSeen()) ;
             System.out.println("HIT anykey") ;
-            in.nextLine() ;
+            in.nextLine() ; */
+        
             labRecruitsEnvironment.close() ;
-            //if (g.getStatus().failed()) break ;
-            results += ">> tc-" + i + ", goalstatus: " + g.getStatus() 
+            
+            results += ">> tc-" + i + ", Duration: "+ t + ", goalstatus: " + g.getStatus() 
                + ", #fail: " + testAgent.getTestDataCollector().getNumberOfFailVerdictsSeen()
                + ", #success: " + testAgent.getTestDataCollector().getNumberOfPassVerdictsSeen() + "\n" ;
-            if(g.getStatus().failed()) break ;
           
         }
         System.out.println("" + results) ;
         testServer.close();
-    }
-
+        
+	}
 }
