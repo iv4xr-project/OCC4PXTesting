@@ -67,7 +67,8 @@
     		<artifactId>mbt</artifactId>
     		<version>0.0.1</version>
     		<scope>system</scope>
-			<systemPath>${project.basedir}/../mbt-0.0.1-SNAPSHOT-jar-with-dependencies.jar</systemPath>		</dependency>
+    		<systemPath>C:/Users/Gholi002/Documents/Utrecht/iv4XR Research/Implementation/mbt-0.0.1-SNAPSHOT-jar-with-dependencies.jar</systemPath>
+		</dependency>
     
         <dependency>
             <groupId>commons-io</groupId>

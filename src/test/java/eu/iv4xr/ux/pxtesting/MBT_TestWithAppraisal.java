@@ -105,7 +105,7 @@ public class MBT_TestWithAppraisal {
 		// MBT has a model factory controlled by the SUT_EFSM property
 		// "labrecruits.random_default" generate a lab recruits level with parameters
 		// specified above
-		MBTProperties.SUT_EFSM = "labrecruits.random_large";
+		MBTProperties.SUT_EFSM = "labrecruits.random_simple";
 		// there are some predefined configuration to pass to MBTProperties.SUT_EFSM
 		// "labrecruits.random_simple", "labrecruits.random_medium",
 		// "labrecruits.random_large"

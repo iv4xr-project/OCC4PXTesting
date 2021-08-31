@@ -17,7 +17,7 @@ public class CSVImport {
 	      int floornum=0;
 	      while ((nextLine = reader.readNext()) != null && floornum!=2) {
 	    	  
-	    	  if(nextLine[0].startsWith("|w"))	floornum++;
+	    	  if(nextLine[0].startsWith("|"))	floornum++;
 	    	  
 	    	  if(nextLine[0].startsWith("b"))	continue;
 	    	  else height++;
