@@ -9,6 +9,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
@@ -32,6 +35,11 @@ import eu.fbk.iv4xr.mbt.MBTProperties;
 import eu.fbk.iv4xr.mbt.MBTProperties.LR_random_mode;
 import eu.fbk.iv4xr.mbt.efsm.EFSM;
 import eu.fbk.iv4xr.mbt.efsm.EFSMFactory;
+import eu.fbk.iv4xr.mbt.efsm.EFSMOperation;
+import eu.fbk.iv4xr.mbt.efsm.EFSMState;
+import eu.fbk.iv4xr.mbt.efsm.exp.Assign;
+import eu.fbk.iv4xr.mbt.efsm.exp.Var;
+import eu.fbk.iv4xr.mbt.efsm.exp.bool.BoolNot;
 import eu.fbk.iv4xr.mbt.strategy.GenerationStrategy;
 //import eu.fbk.iv4xr.mbt.strategy.RandomTestStrategy;
 import eu.fbk.iv4xr.mbt.strategy.SearchBasedStrategy;
@@ -41,6 +49,7 @@ import eu.fbk.iv4xr.mbt.testsuite.SuiteChromosome;
 import eu.fbk.iv4xr.mbt.utils.TestSerializationUtils;
 import eu.iv4xr.framework.extensions.occ.Emotion;
 import eu.iv4xr.framework.extensions.occ.EmotionAppraisalSystem;
+import eu.iv4xr.framework.extensions.occ.Event;
 import eu.iv4xr.framework.extensions.occ.Emotion.EmotionType;
 import eu.iv4xr.framework.extensions.occ.Event.Tick;
 import eu.iv4xr.framework.mainConcepts.TestDataCollector;
@@ -74,10 +83,17 @@ public class MBT_TestWithAppraisal {
 
 	// use a logger to save output execution information
 	protected static final Logger logger = LoggerFactory.getLogger(Main.class);
+	protected List <EFSMState> desired_states_tocover = new ArrayList<EFSMState>();
+	protected EFSM efsm_copy;
 	/**
 	 * iv4xr-mbt uses MBTProperties to set properties. In the following method
 	 * explains how to use it
 	 */
+    // context variables
+	public Var<Boolean> hope = new Var<Boolean>("Hope", false);
+	public Var<Boolean> fear = new Var<Boolean>("Fear", false);
+	public Var<Boolean> joy = new Var<Boolean>("Joy", false);
+
 	public void setPropertiesMBT() {
 		// to control level creation, there are few parameters
 		// seed for random number generation
@@ -110,6 +126,10 @@ public class MBT_TestWithAppraisal {
 		// "labrecruits.random_simple", "labrecruits.random_medium",
 		// "labrecruits.random_large"
 
+//		desired_states_tocover.add(new EFSMState("b2"));
+//		desired_states_tocover.add(new EFSMState("b3"));
+//		desired_states_tocover.add(new EFSMState("d3p"));
+		//desired_states_tocover.add(new EFSMState("TR"));
 	}
 
 	/**
@@ -118,7 +138,7 @@ public class MBT_TestWithAppraisal {
 	public boolean existsLabRecruitLevel() {
 		String efsmString = EFSMFactory.getInstance().getEFSM().getEFSMString();
 		boolean out = !efsmString.equalsIgnoreCase("");
-		
+	     efsm_copy = EFSMFactory.getInstance().getEFSM();
 		return out;
 	}
 	
@@ -133,8 +153,11 @@ public class MBT_TestWithAppraisal {
 		// GenerationStrategy generationStrategy = new
 		// RandomTestStrategy<MBTChromosome>();
 
-		// run test generation
+		// run test generation  
 		SuiteChromosome solution = generationStrategy.generateTests();
+		// run test generation to cover selected states
+		//SuiteChromosome solution = generationStrategy.generateTests(desired_states_tocover);
+
 		return solution;
 	}
 
@@ -256,7 +279,8 @@ public class MBT_TestWithAppraisal {
 		writeTests(solution, testFolder);
 		writeModel(modelFolder);
 	}
-	
+
+
 	@Test
     public void runGeneratedTests() throws IOException {
 
@@ -264,6 +288,7 @@ public class MBT_TestWithAppraisal {
         String testFolder = rootFolder + File.separator + "MBTtest";
         String modelFolder = testFolder + File.separator + "Model";
         String labRecruitesExeRootDir = rootFolder + File.separator + "iv4xrDemo";
+   
 
         // load tests from file
         SuiteChromosome loadedSolution = parseTests(testFolder);
@@ -311,13 +336,13 @@ public class MBT_TestWithAppraisal {
             // add an event-producer to the test agent so that it produce events for
             // emotion appraisals:
             EventsProducer eventsProducer = new EventsProducer().attachTestAgent(testAgent);
-
+            	
             // Create an emotion appraiser, and hook it to the agent:
             EmotionAppraisalSystem eas = new EmotionAppraisalSystem(testAgent.getId());
             eas.attachEmotionBeliefBase(new EmotionBeliefBase().attachFunctionalState(testAgent.getState()))
                     .withUserModel(new PlayerOneCharacterization()).addGoal(questIsCompleted, 50)
                     .addGoal(gotAsMuchPointsAsPossible, 50).addInitialEmotions();
-
+            
          // some lists for collecting experiment data:
             List<String[]> csvData_goalQuestIsCompleted = new LinkedList<>();
             String[] csvRow = { "t", "x", "y", "hope", "joy", "satisfaction", "fear" };
@@ -339,6 +364,7 @@ public class MBT_TestWithAppraisal {
             while (g.getStatus().inProgress()) {
             	 Vec3 position = testAgent.getState().worldmodel.position;
                  System.out.println("*** " + t + ", " + testAgent.getState().id + " @" + position);
+                 
                  eventsProducer.generateCurrentEvents();
                  if (eventsProducer.currentEvents.isEmpty()) {
                      eas.update(new Tick(), t);
@@ -349,6 +375,8 @@ public class MBT_TestWithAppraisal {
                          
                      }
                  }
+                 
+                 
                  
                  if (position != null) {
                      Vec3 p_ = position.copy();
@@ -364,7 +392,7 @@ public class MBT_TestWithAppraisal {
                              .apply(eas.getEmotion(questIsCompleted.name, EmotionType.Satisfaction));
                      float fear_completingQuest = normalizeIntensity
                              .apply(eas.getEmotion(questIsCompleted.name, EmotionType.Fear));
-
+                     
                      float hope_getMuchPoints = normalizeIntensity
                              .apply(eas.getEmotion(gotAsMuchPointsAsPossible.name, EmotionType.Hope));
                      float joy_getMuchPoints = normalizeIntensity
@@ -395,6 +423,8 @@ public class MBT_TestWithAppraisal {
                 }
                 t++ ;
              }
+            
+            //updatemodel(eas.map_event_emo);
             
             exportToCSV(csvData_goalQuestIsCompleted, "data_goalQuestCompleted_"+i+".csv");
             exportToCSV(csvData_goalGetMuchPoints, "data_goalGetMuchPoints_"+i+".csv");
@@ -432,5 +462,31 @@ public class MBT_TestWithAppraisal {
         System.out.println("" + results) ;
         testServer.close();
         
+	}
+
+	private void updatemodel(HashMap<Event, HashSet<Emotion>> activated_emotions) {
+
+		/*
+		 * Assignments
+		 */
+		Assign<Boolean> H = new Assign(hope  , new BoolNot(hope));
+		Assign<Boolean> f = new Assign(fear  , new BoolNot(fear));
+		Assign<Boolean> j = new Assign(joy  , new BoolNot(joy));
+		
+		/*
+		 * Operations
+		 */
+		EFSMOperation trigger_hope_T = new EFSMOperation(H);
+		EFSMOperation trigger_fear_T = new EFSMOperation(f);
+		EFSMOperation trigger_joy_T = new EFSMOperation(j);
+		
+		for (Event key : activated_emotions.keySet()) {
+			HashSet<Emotion> value = activated_emotions.get(key);
+		    System.out.println("Key = " + key + ", Value = " + value);
+		}
+		
+		efsm_copy.getTransition("find the transition id").setOp(trigger_hope_T);
+        
+		
 	}
 }

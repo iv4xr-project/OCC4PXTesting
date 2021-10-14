@@ -5,6 +5,7 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -23,8 +24,10 @@ import environments.LabRecruitsConfig;
 import environments.LabRecruitsEnvironment;
 import eu.fbk.iv4xr.mbt.MBTProperties;
 import eu.fbk.iv4xr.mbt.MBTProperties.LR_random_mode;
+import eu.fbk.iv4xr.mbt.MBTProperties.ModelCriterion;
 import eu.fbk.iv4xr.mbt.efsm.EFSM;
 import eu.fbk.iv4xr.mbt.efsm.EFSMFactory;
+import eu.fbk.iv4xr.mbt.efsm.EFSMState;
 import eu.fbk.iv4xr.mbt.strategy.GenerationStrategy;
 //import eu.fbk.iv4xr.mbt.strategy.RandomTestStrategy;
 import eu.fbk.iv4xr.mbt.strategy.SearchBasedStrategy;
@@ -41,6 +44,8 @@ import nl.uu.cs.aplib.mainConcepts.GoalStructure;
 import static nl.uu.cs.aplib.AplibEDSL.* ;
 import world.BeliefState;
 import eu.fbk.iv4xr.mbt.Main;
+import eu.fbk.iv4xr.mbt.efsm.labRecruits.ButtonDoors1Count;
+import eu.fbk.iv4xr.mbt.efsm.labRecruits.ButtonDoors1;
 
 /**
  * In this test I'll show how to - use mbt to create a Lab Recruits level -
@@ -55,6 +60,7 @@ public class MBT_Test {
 
 	// use a logger to save output execution information
 	protected static final Logger logger = LoggerFactory.getLogger(Main.class);
+	protected List <EFSMState> desired_states_tocover = new ArrayList<EFSMState>();
 
 	/**
 	 * iv4xr-mbt uses MBTProperties to set properties. In the following method
@@ -87,10 +93,16 @@ public class MBT_Test {
 		// MBT has a model factory controlled by the SUT_EFSM property
 		// "labrecruits.random_default" generate a lab recruits level with parameters
 		// specified above
-		MBTProperties.SUT_EFSM = "labrecruits.random_default";
+		MBTProperties.SUT_EFSM = "labrecruits.random_simple";
 		// there are some predefined configuration to pass to MBTProperties.SUT_EFSM
 		// "labrecruits.random_simple", "labrecruits.random_medium",
 		// "labrecruits.random_large"
+		
+		//customize states you like to be covered in the test suite. 
+		desired_states_tocover.add(new EFSMState("b2"));
+		desired_states_tocover.add(new EFSMState("b3"));
+		desired_states_tocover.add(new EFSMState("d3p"));
+		desired_states_tocover.add(new EFSMState("TR"));
 
 	}
 
@@ -108,7 +120,7 @@ public class MBT_Test {
 	 * Run test generation
 	 */
 	public SuiteChromosome runTestGeneration() {
-
+		
 		// initialize the test generator to use search based strategy
 		GenerationStrategy generationStrategy = new SearchBasedStrategy<MBTChromosome>();
 		// random stategy could also be used
@@ -116,7 +128,8 @@ public class MBT_Test {
 		// RandomTestStrategy<MBTChromosome>();
 
 		// run test generation
-		SuiteChromosome solution = generationStrategy.generateTests();
+		//SuiteChromosome solution = generationStrategy.generateTests();
+		SuiteChromosome solution = generationStrategy.generateTests(desired_states_tocover);
 		return solution;
 	}
 
@@ -207,7 +220,7 @@ public class MBT_Test {
 		return suite;
 	}
 
-	//@Test
+	@Test
 	public void runGenerationTest() {
 		// set the parameters for the generation
 		setPropertiesMBT();
@@ -219,7 +232,6 @@ public class MBT_Test {
 		
 		// run test generation
 		SuiteChromosome solution = runTestGeneration();
-
 		// output folders
 		String rootFolder = new File(System.getProperty("user.dir")).getParent();
 		String testFolder = rootFolder + File.separator + "MBTtest";
@@ -239,7 +251,7 @@ public class MBT_Test {
 		writeModel(modelFolder);
 	}
 	
-	@Test
+	//@Test
     public void runGeneratedTests() {
 
 	    String rootFolder = new File(System.getProperty("user.dir")).getParent();

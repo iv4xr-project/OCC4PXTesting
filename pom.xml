@@ -64,12 +64,9 @@
         </dependency>            
   		  <dependency>
     		<groupId>eu.fbk.iv4xr</groupId>
-    		<artifactId>mbt</artifactId>
-    		<version>0.0.1</version>
-    		<scope>system</scope>
-    		<systemPath>C:/Users/Gholi002/Documents/Utrecht/iv4XR Research/Implementation/mbt-0.0.1-SNAPSHOT-jar-with-dependencies.jar</systemPath>
-		</dependency>
-    
+			<artifactId>mbt</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+   		</dependency>
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
