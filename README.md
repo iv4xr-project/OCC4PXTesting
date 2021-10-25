@@ -2,7 +2,7 @@
 # OCC4PXTesting
 
 # master branch
-This is basically the implemented codes of the papers called "" accepted on EMAS2021@AMAAS(in press) which can be accessed via https://arxiv.org/abs/2105.05589
+This is basically the implemented codes of the paper called "" accepted on EMAS2021@AMAAS(in press) which can be accessed via https://arxiv.org/abs/2105.05589
 
 The appriasal system is used for multiple Lab recruits levels including Lab1. Using the written python script, emotional data is visualized in terms of timeline and heatmaps and got stored. 
 The default setting is to run Lab1.
