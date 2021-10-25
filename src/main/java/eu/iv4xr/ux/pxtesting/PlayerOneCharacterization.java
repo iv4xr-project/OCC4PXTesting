@@ -12,7 +12,11 @@ import eu.iv4xr.framework.extensions.occ.BeliefBase.Goals_Status;
 import eu.iv4xr.framework.mainConcepts.WorldEntity;
 import world.BeliefState;
 import world.LabEntity;
-
+/**
+ * 
+ * @author sansari
+ * @author wprasetya
+ */
 public class PlayerOneCharacterization extends UserCharacterization {
 	
 	public static Goal questIsCompleted = new Goal("quest is completed").withSignificance(10) ;
@@ -42,9 +46,9 @@ public class PlayerOneCharacterization extends UserCharacterization {
 	/**
 	 *  we need to alter the keyDoor for every level.
 	 */
-	//static String KeyDoor = "door3" ; //SimplerExperiment_1
+	static String KeyDoor = "door3" ; //SimplerExperiment_1
 	//static String KeyDoor = "d1" ; //Experiment_2
-	static String KeyDoor="d_finish";  //Lab1
+	//static String KeyDoor="d_finish";  //Lab1
 	static String GoalIten = "levelEnd" ;
 	static int maxScore = 620 ; // 20 buttons, 2 goal-flags for SimpleExperiemnt_1   //need to be changed for everylevel!!!
 	
@@ -74,10 +78,10 @@ public class PlayerOneCharacterization extends UserCharacterization {
 		  case LevelCompletedEventName : effectOfLevelCompletedEvent(beliefbase) ; break ;
 		}
 	}
-	
+	public static int health;
 	private void effectOfOuchEvent(BeliefBase beliefbase) {
 		EmotionBeliefBase bbs = (EmotionBeliefBase) beliefbase ;
-		int health = bbs.functionalstate.worldmodel.health ;
+		 health = bbs.functionalstate.worldmodel.health ;
 		int point = bbs.functionalstate.worldmodel.score ;
 
 		// updating belief on the quest-completed goal; if the health drops below 50,
@@ -86,6 +90,7 @@ public class PlayerOneCharacterization extends UserCharacterization {
 		GoalStatus status = bbs.getGoalsStatus().goalStatus(questIsCompleted.name) ;
 		if(status != null && health<50) {
 			status.likelihood = Math.max(0,status.likelihood - 3) ;
+			System.out.print("  Health points is...............: "+ health);
 			if(health <=0) {
 				status.setAsFailed();
 			}

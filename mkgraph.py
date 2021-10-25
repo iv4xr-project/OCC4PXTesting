@@ -34,13 +34,13 @@ def mkTimeProgressionGraph(filename):
     basename = filename.rsplit('.')[0]
     dataset = data_set1 = loadCSV(filename)
 
-    plt.ylabel('intensity')
-    plt.xlabel('time')
+    plt.ylabel('intensity', fontsize=12)
+    plt.xlabel('time', fontsize=12)
     plt.grid(b=True, axis='y')
 
     plt.plot([ int(r['t']) for r in dataset ],
              [ float(r['hope']) for r in dataset ],
-             label = 'hope' )
+             label = 'hope' , )
 
     plt.plot([ int(r['t']) for r in dataset ],
              [ float(r['fear']) for r in dataset ],
@@ -53,9 +53,9 @@ def mkTimeProgressionGraph(filename):
     plt.plot([ int(r['t']) for r in dataset ],
              [ float(r['satisfaction']) for r in dataset ],
                label = 'satisfaction' )
-
+    plt.rcParams.update({'font.size': 12})
     #fig.suptitle("Emotion time progression")
-    plt.title("Emotion over time in a simulated gameplay")
+    plt.title("Emotion over time in a simulated gameplay", fontsize=14)
     plt.legend()
     if saveToFile : plt.savefig('emoOverTime_' + basename + '.png')
     else : plt.show()
@@ -116,7 +116,7 @@ def mkColdMap(filename,width,height):
         # rotate +90 degree
         x = scale*height - yy
         y = xx
-        fear = 10*float(r['fear'])
+        fear = 12*float(r['fear'])
         if map[(x,y)]== white:
            map[(x,y)] = fear
         else:
