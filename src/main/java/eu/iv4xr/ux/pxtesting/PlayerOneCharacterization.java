@@ -13,6 +13,11 @@ import eu.iv4xr.framework.mainConcepts.WorldEntity;
 import world.BeliefState;
 import world.LabEntity;
 
+/**
+* @author sansari
+* @author Wprasetya
+*/
+
 public class PlayerOneCharacterization extends UserCharacterization {
 	
 	public static Goal questIsCompleted = new Goal("quest is completed").withSignificance(10) ;

@@ -54,7 +54,7 @@ import eu.fbk.iv4xr.mbt.efsm.labRecruits.ButtonDoors1;
  * structure
  * 
  * @author prandi
- *
+ * @author  sansari
  */
 public class MBT_Test {
 
