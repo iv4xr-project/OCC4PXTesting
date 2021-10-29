@@ -89,7 +89,8 @@ import eu.fbk.iv4xr.mbt.Main;
  * @author sansari
  * 
  */
-public class Appraisal_tests_over_MBT {
+// Original version when all MBT_model_test_generation, EmotionData and TestOperation are in the same class.
+public class OrigModel_based_pxtesting {
 
 	// use a logger to save output execution information
 	protected static final Logger logger = LoggerFactory.getLogger(Main.class);
@@ -631,9 +632,7 @@ public class Appraisal_tests_over_MBT {
 			    }
 
 		    }
-	    	
-
+	    
 		}
-		System.out.println("here");
 	}
 }

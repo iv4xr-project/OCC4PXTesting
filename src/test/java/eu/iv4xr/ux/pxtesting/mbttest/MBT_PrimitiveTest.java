@@ -1,4 +1,4 @@
-package eu.iv4xr.ux.pxtesting;
+package eu.iv4xr.ux.pxtesting.mbttest;
 
 import static org.junit.Assert.fail;
 
@@ -56,7 +56,7 @@ import eu.fbk.iv4xr.mbt.efsm.labRecruits.ButtonDoors1;
  * @author prandi
  * @author  sansari
  */
-public class MBT_Test {
+public class MBT_PrimitiveTest {
 
 	// use a logger to save output execution information
 	protected static final Logger logger = LoggerFactory.getLogger(Main.class);
@@ -220,7 +220,7 @@ public class MBT_Test {
 		return suite;
 	}
 
-	@Test
+	//@Test
 	public void runGenerationTest() {
 		// set the parameters for the generation
 		setPropertiesMBT();
@@ -251,7 +251,7 @@ public class MBT_Test {
 		writeModel(modelFolder);
 	}
 	
-	//@Test
+	@Test
     public void runGeneratedTests() {
 
 	    String rootFolder = new File(System.getProperty("user.dir")).getParent();
