@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.FileReader;
 import com.opencsv.CSVReader;
 
-public class CSVImport {
+public class CSVlevelImport {
 	
 	public static int[] ImportFromCSV(String Filename, String Path) throws IOException {
 		

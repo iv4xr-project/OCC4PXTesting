@@ -151,6 +151,30 @@ public class model_test_IOoperations {
 		}
 
 	}
+	protected void writeTests(List<AbstractTestSequence> solution, String testFolder) {
+		// make sure tests folder exists
+		File testsFolder = new File(testFolder);
+		testsFolder.mkdirs();
+		int count = 1;
+		for (AbstractTestSequence testCase : solution) {
+			String dotFileName = testFolder + File.separator + "test_" + count + ".dot";
+			String txtFileName = testFolder + File.separator + "test_" + count + ".txt";
+			String serFileName = testFolder + File.separator + "test_" + count + ".ser";
+			File dotFile = new File(dotFileName);
+			File txtFile = new File(txtFileName);
+			try {
+				FileUtils.writeStringToFile(dotFile, testCase.toDot(),
+						Charset.defaultCharset());
+				FileUtils.writeStringToFile(txtFile, testCase.toString(), Charset.defaultCharset());
+				TestSerializationUtils.saveTestSequence(testCase, serFileName);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			count++;
+		}
+
+	}
 	/**
 	 * Load serialized tests into a SuiteChromosome object
 	 * @param testsDir

@@ -64,7 +64,7 @@ import eu.iv4xr.framework.mainConcepts.TestAgent;
 import eu.iv4xr.framework.mainConcepts.TestDataCollector;
 import eu.iv4xr.framework.mainConcepts.ObservationEvent.TimeStampedObservationEvent;
 import eu.iv4xr.framework.spatial.Vec3;
-import eu.iv4xr.ux.pxtesting.CSVImport;
+import eu.iv4xr.ux.pxtesting.CSVlevelImport;
 import eu.iv4xr.ux.pxtesting.LREvent;
 import eu.iv4xr.ux.pxtesting.PlayerOneCharacterization;
 import eu.iv4xr.ux.pxtesting.PlayerOneCharacterization.EmotionBeliefBase;
@@ -78,7 +78,7 @@ import nl.uu.cs.aplib.mainConcepts.GoalStructure.PrimitiveGoal;
 import nl.uu.cs.aplib.multiAgentSupport.Message;
 
 import static eu.iv4xr.ux.pxtesting.CSVExport.exportToCSV;
-import static eu.iv4xr.ux.pxtesting.CSVImport.ImportFromCSV;
+import static eu.iv4xr.ux.pxtesting.CSVlevelImport.ImportFromCSV;
 import static eu.iv4xr.ux.pxtesting.PlayerOneCharacterization.gotAsMuchPointsAsPossible;
 import static eu.iv4xr.ux.pxtesting.PlayerOneCharacterization.questIsCompleted;
 import static nl.uu.cs.aplib.AplibEDSL.* ;
@@ -306,7 +306,7 @@ public class Test_Appraisal_over_MBT {
         // set the configuration of the server 
         // level file name is hard coded in writeModel but can be changed
         LabRecruitsConfig lrCfg = new LabRecruitsConfig("LabRecruits_level", modelFolder);
-        levelsize lrsize= new levelsize(CSVImport.ImportFromCSV("LabRecruits_level", modelFolder));
+        levelsize lrsize= new levelsize(CSVlevelImport.ImportFromCSV("LabRecruits_level", modelFolder));
         
         // convert test cases in loadedSolution to goal structure
         
@@ -326,7 +326,8 @@ public class Test_Appraisal_over_MBT {
             LabRecruitsTestAgent testAgent = new LabRecruitsTestAgent("Agent1") ; 
             testAgent.attachState(new BeliefState())
                      .setTestDataCollector(dataCollector)
-                     .attachEnvironment(labRecruitsEnvironment) ;
+                     .attachEnvironment(labRecruitsEnvironment) 
+            .attachSyntheticEventsProducer(new EventsProducer());
 
             List<GoalStructure> goals = lrExecutor.convertTestCaseToGoalStructure(testAgent, testcase);
             GoalStructure g =SEQ(goals.toArray(new GoalStructure[goals.size()]));
@@ -337,9 +338,7 @@ public class Test_Appraisal_over_MBT {
             testAgent.setGoal(g) ;
             
             // add an event-producer to the test agent so that it produce events for
-            // emotion appraisals:
-            EventsProducer eventsProducer = new EventsProducer().attachTestAgent(testAgent);
-            	
+            // emotion appraisals:            	
             // Create an emotion appraiser, and hook it to the agent:
             EmotionAppraisalSystem eas = new EmotionAppraisalSystem(testAgent.getId());
             eas.attachEmotionBeliefBase(new EmotionBeliefBase().attachFunctionalState(testAgent.getState()))
@@ -362,19 +361,19 @@ public class Test_Appraisal_over_MBT {
             	 Vec3 position = testAgent.getState().worldmodel.position;
                  System.out.println("*** " + t + ", " + testAgent.getState().id + " @" + position);
                  
-                 eventsProducer.generateCurrentEvents();
-                 if (eventsProducer.currentEvents.isEmpty()) {
+                 //eventsProducer.generateCurrentEvents();
+                 if (testAgent.getSyntheticEventsProducer().currentEvents.isEmpty()) {
                      eas.update(new Tick(), t);
                  }
                  else {
-                     for (Message m : eventsProducer.currentEvents) {
+                     for (Message m : testAgent.getSyntheticEventsProducer().currentEvents) {
                          eas.update( new LREvent(m.getMsgName()), t);
                      }
                  }
 
                  if (position != null) {
                      Vec3 p_ = position.copy();
-                     Float score = (float) testAgent.getState().worldmodel.score;
+                     Float score = (float) testAgent.getState().worldmodel().score;
                      System.out.println("*** score=" + score);
 
                      float hope_completingQuest = normalizeIntensity

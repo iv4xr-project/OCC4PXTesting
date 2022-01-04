@@ -82,15 +82,16 @@ public class EmotionData {
  
  	public  EmotionData() {
          // some lists for collecting experiment data:
-            String[] csvRow = { "t", "x", "y", "hope", "joy", "satisfaction", "fear" };
+            String[] csvRow = { "t", "x", "y", "hope", "joy", "satisfaction", "fear", "distress","diappointment","score", "losthealth" , "remainedhealth"};
             csvData_goalQuestIsCompleted.add(csvRow);
             csvData_goalGetMuchPoints.add(csvRow);
  	}
 	
-	public  void recordNewrow(Float score, EmotionAppraisalSystem eas, Vec3 position, int t)
+	public  void recordNewrow(Float score, Float losthealth, float remainedhealth, EmotionAppraisalSystem eas, Vec3 position, int t)
 	{
 		 Vec3 p_ = position.copy();
         Function<Emotion, Float> normalizeIntensity = e -> e != null ? (float) e.intensity / 800f : 0f;
+        
           float hope_completingQuest = normalizeIntensity
                   .apply(eas.getEmotion(questIsCompleted.name, EmotionType.Hope));
           float joy_completingQuest = normalizeIntensity
@@ -99,6 +100,10 @@ public class EmotionData {
                   .apply(eas.getEmotion(questIsCompleted.name, EmotionType.Satisfaction));
           float fear_completingQuest = normalizeIntensity
                   .apply(eas.getEmotion(questIsCompleted.name, EmotionType.Fear));
+          float distress_completingQuest = normalizeIntensity
+                  .apply(eas.getEmotion(questIsCompleted.name, EmotionType.Distress));
+          float disapp_completingQuest = normalizeIntensity
+                  .apply(eas.getEmotion(questIsCompleted.name, EmotionType.Disappointment));
           
           float hope_getMuchPoints = normalizeIntensity
                   .apply(eas.getEmotion(gotAsMuchPointsAsPossible.name, EmotionType.Hope));
@@ -110,7 +115,7 @@ public class EmotionData {
                   .apply(eas.getEmotion(gotAsMuchPointsAsPossible.name, EmotionType.Fear));
 
           String[] csvRow1 = { "" + t, "" + p_.x, "" + p_.z, "" + hope_completingQuest,
-                  "" + joy_completingQuest, "" + satisfaction_completingQuest, "" + fear_completingQuest };
+                  "" + joy_completingQuest, "" + satisfaction_completingQuest, "" + fear_completingQuest, "" +distress_completingQuest,""+disapp_completingQuest, "" +score, "" +losthealth,""+ remainedhealth};
 
           String[] csvRow2 = { "" + t, "" + p_.x, "" + p_.z, "" + hope_getMuchPoints, "" + joy_getMuchPoints,
                   "" + satisfaction_getMuchPoints, "" + fear_getMuchPoints };

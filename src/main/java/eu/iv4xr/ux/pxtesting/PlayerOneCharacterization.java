@@ -2,6 +2,7 @@ package eu.iv4xr.ux.pxtesting;
 
 import static agents.EventsProducer.*;
 
+import eu.fbk.iv4xr.mbt.efsm.EFSMState;
 import eu.iv4xr.framework.extensions.occ.BeliefBase;
 import eu.iv4xr.framework.extensions.occ.Emotion;
 import eu.iv4xr.framework.extensions.occ.Event;
@@ -22,11 +23,11 @@ public class PlayerOneCharacterization extends UserCharacterization {
 	
 	public static Goal questIsCompleted = new Goal("quest is completed").withSignificance(10) ;
 	public static Goal gotAsMuchPointsAsPossible = new Goal("get as much points as possible").withSignificance(5) ;
-	
+	static String KeyDoor;
+
 	public static class EmotionBeliefBase implements BeliefBase {
 		
 		Goals_Status goals_status = new Goals_Status() ;
-		
 		BeliefState functionalstate ;
 		
 		public EmotionBeliefBase() { }
@@ -44,12 +45,16 @@ public class PlayerOneCharacterization extends UserCharacterization {
 	public PlayerOneCharacterization() {
 		
 	}
+	public PlayerOneCharacterization(String goalstate) {
+		KeyDoor=goalstate.toString();
+	}
 	/**
 	 *  we need to alter the keyDoor for every level.
 	 */
 	//static String KeyDoor = "door3" ; //SimplerExperiment_1
 	//static String KeyDoor = "d1" ; //Experiment_2
-	static String KeyDoor="d_finish";  //Lab1
+	//static String KeyDoor="d_finish";  //Lab1
+
 	static String GoalIten = "levelEnd" ;
 	static int maxScore = 620 ; // 20 buttons, 2 goal-flags for SimpleExperiemnt_1   //need to be changed for everylevel!!!
 	
@@ -65,8 +70,8 @@ public class PlayerOneCharacterization extends UserCharacterization {
 	    }
 		
 		EmotionBeliefBase bbs = (EmotionBeliefBase) beliefbase ;
-		int health = bbs.functionalstate.worldmodel.health ;
-		int point = bbs.functionalstate.worldmodel.score ;
+		int health = bbs.functionalstate.worldmodel().health ;
+		int point = bbs.functionalstate.worldmodel().score ;
 		
 		GoalStatus gQIC_status = bbs.getGoalsStatus().goalStatus(questIsCompleted.name) ;
 		GoalStatus gGAMP_status = bbs.getGoalsStatus().goalStatus(gotAsMuchPointsAsPossible.name) ;
@@ -77,20 +82,22 @@ public class PlayerOneCharacterization extends UserCharacterization {
 		  case OpeningADoorEventName : effectOfOpeningADoorEvent(beliefbase) ; break ;
 		  case GetPointEventName     : effectOfGetPointEvent(beliefbase) ; break ;
 		  case LevelCompletedEventName : effectOfLevelCompletedEvent(beliefbase) ; break ;
+		  case LevelCompletionInSightEventName : effectOfLevelCompletionInSightEvent(beliefbase) ; break ;
 		}
 	}
 	
+ //balance btw fear- distress-disappointment 
 	private void effectOfOuchEvent(BeliefBase beliefbase) {
 		EmotionBeliefBase bbs = (EmotionBeliefBase) beliefbase ;
-		int health = bbs.functionalstate.worldmodel.health ;
-		int point = bbs.functionalstate.worldmodel.score ;
+		int health = bbs.functionalstate.worldmodel().health ;
+		int point = bbs.functionalstate.worldmodel().score ;
 
 		// updating belief on the quest-completed goal; if the health drops below 50,
 		// decrease this goal likelihood by 3.
 		// If the health drops to 0, game over. The goal is marked as failed.
 		GoalStatus status = bbs.getGoalsStatus().goalStatus(questIsCompleted.name) ;
 		if(status != null && health<50) {
-			status.likelihood = Math.max(0,status.likelihood - 3) ;
+			status.likelihood = Math.max(0,status.likelihood - 10) ;
 			if(health <=0) {
 				status.setAsFailed();
 			}
@@ -98,7 +105,7 @@ public class PlayerOneCharacterization extends UserCharacterization {
 		// updating the belief on the get-max-point goal
 		status = bbs.getGoalsStatus().goalStatus(gotAsMuchPointsAsPossible.name) ;
 		if(status != null && health<50) {
-			status.likelihood = Math.max(0,status.likelihood - 3) ;
+			status.likelihood = Math.max(0,status.likelihood - 10) ;
 			if(health <=0) {
 				status.setAsFailed();
 			}
@@ -107,7 +114,7 @@ public class PlayerOneCharacterization extends UserCharacterization {
 	
 	private void effectOfLevelCompletedEvent(BeliefBase beliefbase) {
 		EmotionBeliefBase bbs = (EmotionBeliefBase) beliefbase ;
-		int health = bbs.functionalstate.worldmodel.health ;
+		int health = bbs.functionalstate.worldmodel().health ;
 		GoalStatus status = bbs.getGoalsStatus().goalStatus(questIsCompleted.name) ;
 		if(status != null && health>0) {
 			status.setAsAchieved();
@@ -116,8 +123,8 @@ public class PlayerOneCharacterization extends UserCharacterization {
 		
 	private void effectOfOpeningADoorEvent(BeliefBase beliefbase) {
 		EmotionBeliefBase bbs = (EmotionBeliefBase) beliefbase ;
-		int health = bbs.functionalstate.worldmodel.health ;
-		int point = bbs.functionalstate.worldmodel.score ;
+		int health = bbs.functionalstate.worldmodel().health ;
+		int point = bbs.functionalstate.worldmodel().score ;
 
 		boolean finalDoorIsOpen = false ;
 		int numberOfDoorsMadeOpen =  0 ;
@@ -147,10 +154,14 @@ public class PlayerOneCharacterization extends UserCharacterization {
 			}
 		}		
 	}
+	private void effectOfLevelCompletionInSightEvent(BeliefBase beliefbase) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 	private void effectOfGetPointEvent(BeliefBase beliefbase) {
 		EmotionBeliefBase bbs = (EmotionBeliefBase) beliefbase ;
-		int scoreGained = (100*bbs.functionalstate.worldmodel.scoreGained / maxScore) ;
+		int scoreGained = (100*bbs.functionalstate.worldmodel().scoreGained / maxScore) ;
 
 		// updating the belief on the get-max-point goal
 		GoalStatus status = bbs.getGoalsStatus().goalStatus(gotAsMuchPointsAsPossible.name) ;

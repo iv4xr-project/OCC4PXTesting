@@ -128,8 +128,8 @@ public class MBT_PrimitiveTest {
 		// RandomTestStrategy<MBTChromosome>();
 
 		// run test generation
-		//SuiteChromosome solution = generationStrategy.generateTests();
-		SuiteChromosome solution = generationStrategy.generateTests(desired_states_tocover);
+		SuiteChromosome solution = generationStrategy.generateTests();
+		//SuiteChromosome solution = generationStrategy.generateTests(desired_states_tocover);
 		return solution;
 	}
 
