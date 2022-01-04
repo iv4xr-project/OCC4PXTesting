@@ -1,4 +1,0 @@
-Agent Agent1 has died.
-Client disconnected forcefully
-Loading level 'LabRecruits_level'
-Finished loading level
