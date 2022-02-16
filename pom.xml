@@ -8,7 +8,7 @@
   <artifactId>pxtestingPipeline</artifactId>
   <version>1.0</version>
 
-  <name>pxtesting</name>
+  <name>pxtestingPipeline</name>
   <url>https://iv4xr-project.eu/</url>
 
   <properties>
