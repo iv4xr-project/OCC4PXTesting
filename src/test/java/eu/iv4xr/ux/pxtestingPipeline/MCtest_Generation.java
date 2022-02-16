@@ -1,4 +1,4 @@
-package eu.iv4xr.ux.pxtesting;
+package eu.iv4xr.ux.pxtestingPipeline;
 
 import static eu.iv4xr.framework.extensions.ltl.LTL.*;
 import static eu.iv4xr.framework.extensions.ltl.LTL2Buchi.getBuchi;
@@ -44,12 +44,13 @@ import eu.iv4xr.framework.extensions.ltl.IExplorableState;
 import eu.iv4xr.framework.extensions.ltl.ITransition;
 import eu.iv4xr.framework.extensions.ltl.LTL;
 import eu.iv4xr.framework.extensions.ltl.BasicModelChecker.Path;
+import eu.iv4xr.ux.pxtestingPipeline.Distance;
 import eu.iv4xr.framework.extensions.ltl.*;
 import nl.uu.cs.aplib.utils.Pair;
 import eu.fbk.iv4xr.mbt.Main;
 import static eu.iv4xr.framework.extensions.ltl.LTL.*;
 import static org.junit.jupiter.api.Assertions.* ;
-import eu.iv4xr.ux.pxtesting.Distance;
+
 import java.util.LinkedList;
 import java.util.List;
 

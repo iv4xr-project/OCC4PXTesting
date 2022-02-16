@@ -9,10 +9,9 @@ at Utrecht University within the Software and Game project course.
 package eu.iv4xr.ux.pxtesting.mbttest;
 import agents.EventsProducer;
 import agents.LabRecruitsTestAgent;
-import eu.iv4xr.ux.pxtesting.LREvent;
-import eu.iv4xr.ux.pxtesting.PlayerOneCharacterization;
-import static eu.iv4xr.ux.pxtesting.PlayerOneCharacterization.*;
-import eu.iv4xr.ux.pxtesting.TestSettings;
+import eu.iv4xr.ux.pxtestingPipeline.LREvent;
+import eu.iv4xr.ux.pxtestingPipeline.PlayerOneCharacterization;
+import eu.iv4xr.ux.pxtestingPipeline.TestSettings;
 import agents.tactics.GoalLib;
 import agents.tactics.TacticLib;
 import environments.LabRecruitsConfig;
@@ -44,8 +43,10 @@ import org.junit.jupiter.api.Test;
 import game.Platform;
 import game.LabRecruitsTestServer;
 import world.BeliefState;
-import static eu.iv4xr.ux.pxtesting.CSVExport.*;
-import static eu.iv4xr.ux.pxtesting.TestSettings.*;
+
+import static eu.iv4xr.ux.pxtestingPipeline.CSVExport.*;
+import static eu.iv4xr.ux.pxtestingPipeline.PlayerOneCharacterization.*;
+import static eu.iv4xr.ux.pxtestingPipeline.TestSettings.*;
 import static nl.uu.cs.aplib.AplibEDSL.*;
 import java.nio.file.Paths;
 import java.util.List;

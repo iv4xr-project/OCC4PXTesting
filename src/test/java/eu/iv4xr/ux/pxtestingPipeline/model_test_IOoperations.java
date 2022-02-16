@@ -1,4 +1,4 @@
-package eu.iv4xr.ux.pxtesting;
+package eu.iv4xr.ux.pxtestingPipeline;
 
 import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -53,7 +53,7 @@ import eu.iv4xr.framework.mainConcepts.TestAgent;
 import eu.iv4xr.framework.mainConcepts.TestDataCollector;
 import eu.iv4xr.framework.mainConcepts.ObservationEvent.TimeStampedObservationEvent;
 import eu.iv4xr.framework.spatial.Vec3;
-import eu.iv4xr.ux.pxtesting.PlayerOneCharacterization.EmotionBeliefBase;
+import eu.iv4xr.ux.pxtestingPipeline.PlayerOneCharacterization.EmotionBeliefBase;
 import game.LabRecruitsTestServer;
 import game.Platform;
 import eu.fbk.iv4xr.mbt.execution.labrecruits.LabRecruitsTestSuiteExecutor;
@@ -62,9 +62,9 @@ import nl.uu.cs.aplib.mainConcepts.GoalStructure;
 import nl.uu.cs.aplib.mainConcepts.GoalStructure.PrimitiveGoal;
 import nl.uu.cs.aplib.multiAgentSupport.Message;
 
-import static eu.iv4xr.ux.pxtesting.CSVExport.exportToCSV;
-import static eu.iv4xr.ux.pxtesting.PlayerOneCharacterization.gotAsMuchPointsAsPossible;
-import static eu.iv4xr.ux.pxtesting.PlayerOneCharacterization.questIsCompleted;
+import static eu.iv4xr.ux.pxtestingPipeline.CSVExport.exportToCSV;
+import static eu.iv4xr.ux.pxtestingPipeline.PlayerOneCharacterization.gotAsMuchPointsAsPossible;
+import static eu.iv4xr.ux.pxtestingPipeline.PlayerOneCharacterization.questIsCompleted;
 import static nl.uu.cs.aplib.AplibEDSL.* ;
 import world.BeliefState;
 

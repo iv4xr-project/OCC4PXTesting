@@ -1,4 +1,4 @@
-package eu.iv4xr.ux.pxtesting;
+package eu.iv4xr.ux.pxtestingPipeline;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -41,6 +41,7 @@ import eu.iv4xr.framework.extensions.ltl.BuchiModelChecker;
 import eu.iv4xr.framework.extensions.ltl.IExplorableState;
 import eu.iv4xr.framework.extensions.ltl.ITransition;
 import eu.iv4xr.framework.extensions.ltl.BasicModelChecker.Path;
+import eu.iv4xr.ux.pxtestingPipeline.Distance;
 import info.debatty.java.stringsimilarity.Jaccard;
 import info.debatty.java.stringsimilarity.JaroWinkler;
 import nl.uu.cs.aplib.utils.Pair;

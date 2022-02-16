@@ -1,4 +1,4 @@
-package eu.iv4xr.ux.pxtesting;
+package eu.iv4xr.ux.pxtestingPipeline;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

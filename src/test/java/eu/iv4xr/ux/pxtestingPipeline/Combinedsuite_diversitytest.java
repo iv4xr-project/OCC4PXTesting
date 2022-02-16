@@ -1,4 +1,4 @@
-package eu.iv4xr.ux.pxtesting;
+package eu.iv4xr.ux.pxtestingPipeline;
 
 import static eu.iv4xr.framework.extensions.ltl.LTL.ltlAnd;
 import static eu.iv4xr.framework.extensions.ltl.LTL.ltlNot;
@@ -54,6 +54,7 @@ import eu.iv4xr.framework.extensions.ltl.IExplorableState;
 import eu.iv4xr.framework.extensions.ltl.ITransition;
 import eu.iv4xr.framework.extensions.ltl.LTL;
 import eu.iv4xr.framework.extensions.ltl.BasicModelChecker.Path;
+import eu.iv4xr.ux.pxtestingPipeline.Distance;
 import nl.uu.cs.aplib.utils.Pair;
 import eu.fbk.iv4xr.mbt.Main;
 
