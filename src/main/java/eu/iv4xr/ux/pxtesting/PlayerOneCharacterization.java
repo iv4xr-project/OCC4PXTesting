@@ -96,16 +96,17 @@ public class PlayerOneCharacterization extends UserCharacterization {
 		// decrease this goal likelihood by 3.
 		// If the health drops to 0, game over. The goal is marked as failed.
 		GoalStatus status = bbs.getGoalsStatus().goalStatus(questIsCompleted.name) ;
+		status.likelihood = Math.max(0,status.likelihood - 10) ;
 		if(status != null && health<50) {
-			status.likelihood = Math.max(0,status.likelihood - 10) ;
 			if(health <=0) {
 				status.setAsFailed();
+				status.likelihood=0;
 			}
 		}
 		// updating the belief on the get-max-point goal
 		status = bbs.getGoalsStatus().goalStatus(gotAsMuchPointsAsPossible.name) ;
 		if(status != null && health<50) {
-			status.likelihood = Math.max(0,status.likelihood - 10) ;
+			status.likelihood = Math.max(0,status.likelihood - 5) ;
 			if(health <=0) {
 				status.setAsFailed();
 			}
@@ -135,9 +136,9 @@ public class PlayerOneCharacterization extends UserCharacterization {
 				if(e.type == LabEntity.DOOR) {
 					if(e.getBooleanProperty("isOpen")) {
 						numberOfDoorsMadeOpen++ ;
-						if(e.id.equals(KeyDoor)) {
-							finalDoorIsOpen = true ;
-						}
+//						if(e.id.equals(KeyDoor)) {
+//							finalDoorIsOpen = true ;
+//						}
 					}
 					else numberOfDoorsMadeClosed++ ;
 					
@@ -149,13 +150,16 @@ public class PlayerOneCharacterization extends UserCharacterization {
 		GoalStatus status = bbs.getGoalsStatus().goalStatus(questIsCompleted.name) ;
 		if(status != null) {
 			status.likelihood = Math.min(80,status.likelihood + 10*(numberOfDoorsMadeOpen - numberOfDoorsMadeClosed)) ;
-			if(finalDoorIsOpen) {
-				status.likelihood = 100 ;
-			}
+//			if(finalDoorIsOpen) {
+//				status.likelihood = 100 ;
+//			}
 		}		
 	}
 	private void effectOfLevelCompletionInSightEvent(BeliefBase beliefbase) {
-		// TODO Auto-generated method stub
+		
+		EmotionBeliefBase bbs = (EmotionBeliefBase) beliefbase ;
+		GoalStatus status = bbs.getGoalsStatus().goalStatus(questIsCompleted.name) ;
+		status.likelihood = 100 ;
 		
 	}
 	
@@ -174,7 +178,7 @@ public class PlayerOneCharacterization extends UserCharacterization {
 	// various rules:
 	
 	public int desirabilityAppraisalRule(Goals_Status goals_status, String eventName, String goalName) {
-		if(eventName.equals(OuchEventName)) return -10 ;
+		if(eventName.equals(OuchEventName)) return -150 ;
 		if(eventName.equals(OpeningADoorEventName) && goalName.equals(questIsCompleted.name)) {
 			   return 800 ;
 		}
@@ -184,7 +188,12 @@ public class PlayerOneCharacterization extends UserCharacterization {
 		   if(eventName.equals(GetPointEventName) && goalName.equals(gotAsMuchPointsAsPossible.name)) {
 			   return 10 ;
 		   }
+		   if(eventName.equals(LevelCompletionInSightEventName) && goalName.equals(questIsCompleted.name))
+		   {
+			   return 800;
+		   }
 		   return 0 ;
+
 	}
 	
 	public int emotionIntensityDecayRule(Emotion.EmotionType etype) { return 2 ; }

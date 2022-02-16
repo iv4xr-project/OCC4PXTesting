@@ -86,7 +86,7 @@ public class Model_based_pxtesting {
     public void runGeneratedTests() throws IOException {
 
 	    String rootFolder = new File(System.getProperty("user.dir")).getParent();
-        String testFolder = rootFolder + File.separator + "MCtest";
+        String testFolder = rootFolder + File.separator + "Combinedtest";
         String modelFolder = testFolder + File.separator + "Model";
         String UdpateFolder = testFolder + File.separator + "UpdatedModel";
         String labRecruitesExeRootDir = rootFolder + File.separator + "iv4xrDemo";
@@ -104,6 +104,13 @@ public class Model_based_pxtesting {
 		
         // load tests from file
         SuiteChromosome loadedSolution = set.parseTests(testFolder);
+        
+		// choose a distance metric from Jaccard, Jaro- Winkler or Leveneshtien.
+        Distance dis=new Distance("jaccard");
+		double totaldistance= dis.distance(loadedSolution);
+		System.out.println("MC-testsuite size is: "+ loadedSolution.size());
+		System.out.println("total Distance: "+totaldistance);
+		
         // open the server
         LabRecruitsTestServer testServer = new LabRecruitsTestServer(false,
                 Platform.PathToLabRecruitsExecutable(labRecruitesExeRootDir));
@@ -144,7 +151,7 @@ public class Model_based_pxtesting {
             // Create an emotion appraiser, and hook it to the agent:
             EmotionAppraisalSystem eas = new EmotionAppraisalSystem(testAgent.getId());
             eas.attachEmotionBeliefBase(new EmotionBeliefBase().attachFunctionalState(testAgent.getState()))
-                    .withUserModel(new PlayerOneCharacterization("door0")).addGoal(questIsCompleted, 50)
+                    .withUserModel(new PlayerOneCharacterization()).addGoal(questIsCompleted, 50)
                     .addGoal(gotAsMuchPointsAsPossible, 50).addInitialEmotions();       
             labRecruitsEnvironment.startSimulation();
             // goal not achieved yet
@@ -169,7 +176,7 @@ public class Model_based_pxtesting {
                         	 
                          map.put(testAgent.getState().worldmodel.timestamp, eas.newEmotions);
                          }
-
+                         
                      }
                  }
 
@@ -180,18 +187,18 @@ public class Model_based_pxtesting {
                      Float health = (float) testAgent.getState().worldmodel().health;
                      System.out.println("*** score=" + score);
                      emodata.recordNewrow(score,healthlost,health,eas,position,t);
-                     
+                     if(eas.newEmotions.stream().anyMatch(c->c.etype==Emotion.EmotionType.Disappointment)||eas.newEmotions.stream().anyMatch(c->c.etype==Emotion.EmotionType.Satisfaction))
+                     {
+                    	 break;
+                     }
                  }
-                if (t>10000) {
+                if (t>1000) {
                     break ;
                 }
                 try {
                     Thread.sleep(200);
                     testAgent.update();
-                    if(testAgent.getState().worldmodel().health==0)
-                    {
-                    	break;
-                    }
+                    
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

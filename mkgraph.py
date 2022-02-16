@@ -53,9 +53,18 @@ def mkTimeProgressionGraph(filename):
     plt.plot([ int(r['t']) for r in dataset ],
              [ float(r['satisfaction']) for r in dataset ],
                label = 'satisfaction' )
-    plt.rcParams.update({'font.size': 12})
+    
+    plt.plot([ int(r['t']) for r in dataset ],
+             [ float(r['distress']) for r in dataset ],
+               label = 'distress' )
+    
+    plt.plot([ int(r['t']) for r in dataset ],
+             [ float(r['disappointment']) for r in dataset ],
+               label = 'disappointment' )
+    
+    plt.rcParams.update({'font.size': 8})
     #fig.suptitle("Emotion time progression")
-    plt.title("Emotion over time in a simulated gameplay", fontsize=14)
+    plt.title("Emotion over time in a simulated gameplay", fontsize=12)
     plt.legend()
     if saveToFile : plt.savefig('emoOverTime' + basename +'.png')
     else : plt.show()
@@ -116,9 +125,14 @@ def mkColdMap(filename,width,height):
         # rotate +90 degree
         x = scale*height - yy
         y = xx
-        fear = 12*float(r['fear'])
+        fear=float(r['fear'])
+        distress = float(r['distress'])
+        disapoitment = float(r['disapoitment'])
+
+        combined = 12*(fear + 1.1*distress + 1.5*disapoitment)
+        
         if map[(x,y)]== white:
-           map[(x,y)] = fear
+           map[(x,y)] = combined
         else:
            map[(x,y)] = max(map[(x,y)],fear)
 

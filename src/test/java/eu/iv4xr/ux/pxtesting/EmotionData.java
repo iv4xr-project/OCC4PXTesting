@@ -82,7 +82,7 @@ public class EmotionData {
  
  	public  EmotionData() {
          // some lists for collecting experiment data:
-            String[] csvRow = { "t", "x", "y", "hope", "joy", "satisfaction", "fear", "distress","diappointment","score", "losthealth" , "remainedhealth"};
+            String[] csvRow = { "t", "x", "y", "hope", "joy", "satisfaction", "fear", "distress","disappointment","score", "losthealth" , "remainedhealth"};
             csvData_goalQuestIsCompleted.add(csvRow);
             csvData_goalGetMuchPoints.add(csvRow);
  	}

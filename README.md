@@ -1,3 +1,3 @@
-# OCC4PXTesting
+# OCC4PXTesting Pipeline
 
-This branch is allocated for the integeration of our appraisal system with MBT to record emotional states of different numbers of test cases. This is the basis for our new research.
+This branch is allocated for the integeration of our appraisal system with MBT to record emotional states of the testsuit generated either by MC or SBT.

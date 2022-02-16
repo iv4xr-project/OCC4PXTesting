@@ -133,9 +133,9 @@ public class model_test_IOoperations {
 		testsFolder.mkdirs();
 		int count = 1;
 		for (MBTChromosome testCase : solution.getTestChromosomes()) {
-			String dotFileName = testFolder + File.separator + "test_" + count + ".dot";
-			String txtFileName = testFolder + File.separator + "test_" + count + ".txt";
-			String serFileName = testFolder + File.separator + "test_" + count + ".ser";
+			String dotFileName = testFolder + File.separator + "testt_" + count + ".dot";
+			String txtFileName = testFolder + File.separator + "testt_" + count + ".txt";
+			String serFileName = testFolder + File.separator + "testt_" + count + ".ser";
 			File dotFile = new File(dotFileName);
 			File txtFile = new File(txtFileName);
 			try {

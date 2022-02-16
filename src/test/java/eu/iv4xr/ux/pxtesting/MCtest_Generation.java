@@ -1,5 +1,7 @@
 package eu.iv4xr.ux.pxtesting;
 
+import static eu.iv4xr.framework.extensions.ltl.LTL.*;
+import static eu.iv4xr.framework.extensions.ltl.LTL2Buchi.getBuchi;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import java.io.File;
@@ -9,6 +11,8 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -38,15 +42,29 @@ import eu.iv4xr.framework.extensions.ltl.Buchi;
 import eu.iv4xr.framework.extensions.ltl.BuchiModelChecker;
 import eu.iv4xr.framework.extensions.ltl.IExplorableState;
 import eu.iv4xr.framework.extensions.ltl.ITransition;
+import eu.iv4xr.framework.extensions.ltl.LTL;
 import eu.iv4xr.framework.extensions.ltl.BasicModelChecker.Path;
+import eu.iv4xr.framework.extensions.ltl.*;
 import nl.uu.cs.aplib.utils.Pair;
 import eu.fbk.iv4xr.mbt.Main;
+import static eu.iv4xr.framework.extensions.ltl.LTL.*;
+import static org.junit.jupiter.api.Assertions.* ;
+import eu.iv4xr.ux.pxtesting.Distance;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import static eu.iv4xr.framework.extensions.ltl.LTL.*;
+import static org.junit.jupiter.api.Assertions.* ;
+
+import java.util.LinkedList;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import info.debatty.java.stringsimilarity.*;
+import java.util.HashMap;
 
 /**
- * In this test I'll show how to - use mbt to create a Lab Recruits level -
- * generate a test suite on it - serialize the level and the test suite on the
- * disk
- * 
  * @author sansari
  */
 public class MCtest_Generation {
@@ -117,11 +135,24 @@ public class MCtest_Generation {
 		
 		// buchi model checking for full-- transition-- coverage along with the goal coverage.
 		List<AbstractTestSequence> absTestsuite=TransitionCoverage(efsm,goal);
-				
-		for(var st : efsm.getStates()){
-			//assertTrue(absTestsuite.stream().anyMatch(c->c.getPath().getStates().contains(st)));
-		}
 		
+		
+		
+		// Measure Similarity btw test cases in a suite.
+		List<AbstractTestSequence> absTestsuite_Subset= AdaptiveRandomSampling(absTestsuite, 33);
+		List<AbstractTestSequence> absTestsuite_Rand= RandomSampling(absTestsuite, 33);
+
+		Distance dis=new Distance("jaro-winkler");
+		double jarodistance= dis.distance(absTestsuite_Rand);
+		System.out.println("Original-testsuite size is: "+ absTestsuite_Rand.size());
+		System.out.println(dis.mtr  + "  Distance: "+jarodistance);
+
+		 jarodistance= dis.distance(absTestsuite_Subset);
+		System.out.println("Sub-testsuite size is: "+ absTestsuite_Subset.size());
+		System.out.println(dis.mtr  + "  Distance: "+jarodistance);
+		 jarodistance= dis.distance(absTestsuite);
+			System.out.println("Sub-testsuite size is: "+ absTestsuite.size());
+			System.out.println(dis.mtr  + "  Distance: "+jarodistance);
 		// output folders
 		String rootFolder = new File(System.getProperty("user.dir")).getParent();
 		String testFolder = rootFolder + File.separator + "MCtest";
@@ -141,6 +172,83 @@ public class MCtest_Generation {
 		io.writeModel(modelFolder);
 	}
 	
+	InterfaceToIv4xrModelCheker.EFSMStateWrapper cast(IExplorableState S) { return (InterfaceToIv4xrModelCheker.EFSMStateWrapper) S ; }
+
+	
+	private List<AbstractTestSequence> TransitionCoverage(EFSM efsm, Predicate<IExplorableState> goal) {
+	    
+		List<AbstractTestSequence> abstestsuite = new ArrayList<AbstractTestSequence>() ;
+		
+		for(var efsmtr : efsm.getTransitons())
+		{
+			
+			Predicate<IExplorableState> tr_Src = state -> {
+				InterfaceToIv4xrModelCheker.EFSMStateWrapper state_ = (InterfaceToIv4xrModelCheker.EFSMStateWrapper) state ;
+				return state_.conf.getState().getId().equals(((EFSMTransition)efsmtr).getSrc().getId()) ;
+			} ;
+			
+			Predicate<IExplorableState> tr_Tgt = state -> {
+				InterfaceToIv4xrModelCheker.EFSMStateWrapper state_ = (InterfaceToIv4xrModelCheker.EFSMStateWrapper) state ;
+				return state_.conf.getState().getId().equals(((EFSMTransition)efsmtr).getTgt().getId()) ;
+			};
+			
+		   	//Buchi model checking	
+			BuchiModelChecker bmc = new BuchiModelChecker(new InterfaceToIv4xrModelCheker(efsm)) ;
+				
+			// invoke the MC:
+			var starttime = System.currentTimeMillis() ;
+				
+			float duration = ((float) (System.currentTimeMillis() - starttime)) / 1000f ; 
+			
+			
+			LTL<IExplorableState> notgf0=ltlNot(now("gf0",S -> cast(S).conf.getState().getId().equals("gf0")));
+			LTL<IExplorableState> f = notgf0.until(ltlAnd(now("n1",tr_Src),
+					next(ltlAnd(now("n2",tr_Tgt),
+				notgf0.until(now("gf0",S -> cast(S).conf.getState().getId().equals("gf0")))))));
+			
+		
+			
+			Buchi B = getBuchi(f) ;
+			Path<Pair<IExplorableState,String>> path = bmc.find( B, 30) ;
+			
+			//Buchi
+			//Path<Pair<IExplorableState,String>> path = bmc.find( eventuallyeventually(tr_Src,tr_Tgt,goal), 20) ;
+			
+			// print stats:
+			System.out.println(">>> #nodes in efsm: " + efsm.getStates().size()) ;
+			System.out.println(">>> #transitions in efsm: " + efsm.getTransitons().size()) ;
+			System.out.println(">>> #concrete states and transitions:\n" + bmc.stats) ;
+			System.out.println(">>> runtime(s): " + duration) ;
+			if(path!=null) {
+				System.out.println(">>> Solution length: " + path.path.size()) ;
+			}
+			System.out.println(">>> Solution: " + path) ;
+				
+			if(path!=null) {
+				//transform transitions to AbstracttestSquence
+				List<ITransition> theTransitions = path.path.stream()
+						.map(step -> step.fst)
+						.collect(Collectors.toList()) ;
+				theTransitions.remove(0);
+				List<EFSMTransition> efsmTransitions = new LinkedList<>() ;
+				for(var tr : theTransitions) {
+						EFSMTransitionWrapper tr_ = (EFSMTransitionWrapper) tr ;
+						efsmTransitions.add(tr_.tr) ;	
+
+				}	
+					
+				var path_ = new eu.fbk.iv4xr.mbt.testcase.Path(efsmTransitions) ;
+				AbstractTestSequence absTestSeq = new AbstractTestSequence() ;
+				absTestSeq.setPath(path_);
+				if(!abstestsuite.contains(absTestSeq))
+				{
+					abstestsuite.add(absTestSeq);
+				}
+			}
+		}
+		return abstestsuite;
+		
+	}
 
 	private List<AbstractTestSequence> StateCoverage(EFSM efsm, Predicate<IExplorableState> goal) {
 		
@@ -162,6 +270,7 @@ public class MCtest_Generation {
 				var starttime = System.currentTimeMillis() ;
 				
 				float duration = ((float) (System.currentTimeMillis() - starttime)) / 1000f ; 
+				
 				
 				//Buchi
 				Path<Pair<IExplorableState,String>> path = bmc.find(eventuallyeventually(state_cover,goal), 19) ; //min depth to have all states covered in random.simple. 
@@ -203,71 +312,93 @@ public class MCtest_Generation {
 		return abstestsuite;
 	}
 	
-	
-	private List<AbstractTestSequence> TransitionCoverage(EFSM efsm, Predicate<IExplorableState> goal) {
-	    
-		List<AbstractTestSequence> abstestsuite = new ArrayList<AbstractTestSequence>() ;
+	static List<AbstractTestSequence> RandomSampling(List<AbstractTestSequence> Testsuite, int size) {
 		
-		for(var efsmtr : efsm.getTransitons())
-		{
-			
-			Predicate<IExplorableState> tr_Src = state -> {
-				InterfaceToIv4xrModelCheker.EFSMStateWrapper state_ = (InterfaceToIv4xrModelCheker.EFSMStateWrapper) state ;
-				return state_.conf.getState().getId().equals(((EFSMTransition)efsmtr).getSrc().getId()) ;
-			} ;
-			
-			Predicate<IExplorableState> tr_Tgt = state -> {
-				InterfaceToIv4xrModelCheker.EFSMStateWrapper state_ = (InterfaceToIv4xrModelCheker.EFSMStateWrapper) state ;
-				return state_.conf.getState().getId().equals(((EFSMTransition)efsmtr).getTgt().getId()) ;
-			};
-			
-		   	//Buchi model checking	
-			BuchiModelChecker bmc = new BuchiModelChecker(new InterfaceToIv4xrModelCheker(efsm)) ;
-				
-			// invoke the MC:
-			var starttime = System.currentTimeMillis() ;
-				
-			float duration = ((float) (System.currentTimeMillis() - starttime)) / 1000f ; 
-				
-			//Buchi
-			Path<Pair<IExplorableState,String>> path = bmc.find( eventuallyeventually(tr_Src,tr_Tgt,goal), 20) ;
-			
-			// print stats:
-			System.out.println(">>> #nodes in efsm: " + efsm.getStates().size()) ;
-			System.out.println(">>> #transitions in efsm: " + efsm.getTransitons().size()) ;
-			System.out.println(">>> #concrete states and transitions:\n" + bmc.stats) ;
-			System.out.println(">>> runtime(s): " + duration) ;
-			if(path!=null) {
-				System.out.println(">>> Solution length: " + path.path.size()) ;
-			}
-			System.out.println(">>> Solution: " + path) ;
-				
-			if(path!=null) {
-				//transform transitions to AbstracttestSquence
-				List<ITransition> theTransitions = path.path.stream()
-						.map(step -> step.fst)
-						.collect(Collectors.toList()) ;
-				theTransitions.remove(0);
-				List<EFSMTransition> efsmTransitions = new LinkedList<>() ;
-				for(var tr : theTransitions) {
-						EFSMTransitionWrapper tr_ = (EFSMTransitionWrapper) tr ;
-						efsmTransitions.add(tr_.tr) ;	
+		Random r = new Random();
+		List<AbstractTestSequence> Testsuite_New= new ArrayList<AbstractTestSequence>();
 
-				}	
-					
-				var path_ = new eu.fbk.iv4xr.mbt.testcase.Path(efsmTransitions) ;
-				AbstractTestSequence absTestSeq = new AbstractTestSequence() ;
-				absTestSeq.setPath(path_);
-				if(!abstestsuite.contains(absTestSeq))
-				{
-					abstestsuite.add(absTestSeq);
-				}
-			}
-		}
-		return abstestsuite;
+		int[] unique = r.ints(0, Testsuite.size()-1).distinct().limit(size).toArray();
+		for(var u: unique)
+		{
+			Testsuite_New.add(Testsuite.get(u));
+		}	
+		return Testsuite_New;
 		
 	}
+	static List<AbstractTestSequence> AdaptiveRandomSampling(List<AbstractTestSequence> Testsuite, int size) {
+		
+		Random r = new Random();
+		List<AbstractTestSequence> Testsuite_New= new ArrayList<AbstractTestSequence>();
+		 
+		int rand1=r.nextInt(Testsuite.size()-1);
+		Testsuite_New.add(Testsuite.get(rand1));
+		 while(Testsuite_New.size()!=size)
+		{
+		
+			int additional=-1;
+			int[] unique = r.ints(0, Testsuite.size()-1).distinct().limit(20).filter(c->c!= rand1).toArray();
+			if(unique.length!=20)
+			{
+				additional=nextIntInRangeButExclude(0,Testsuite.size()-1, rand1);
+			}
+			HashMap<Integer,Double> dismap=new HashMap<Integer,Double>();
 
+			for(var u : unique)
+			{
+				JaroWinkler jar=new JaroWinkler();
+				double totaldistance=0;
+				for (var l : Testsuite_New)
+				{
+
+					totaldistance+=jar.distance(Testsuite.get(u).toString(), l.toString());
+					
+
+				}
+				
+				dismap.put(u, (double) totaldistance);
+			}
+			if(additional!=-1)
+			{
+				JaroWinkler jar=new JaroWinkler();
+				double totaldistance=0;
+				for (var l : Testsuite_New)
+				{
+					totaldistance+=jar.distance(Testsuite.get(additional).toString(), l.toString());
+				}
+				
+				dismap.put(additional, (double) totaldistance);
+			}
+			double maxdistance=dismap.values().stream().max(Double::compare).get();
+			
+			if(maxdistance!=0)
+			{				
+				List <Integer> maxindex=dismap.entrySet().stream().filter(c->c.getValue()==maxdistance ).map(Map.Entry::getKey).collect(Collectors.toList());
+				Testsuite_New.add(Testsuite.get(maxindex.get(0)));
+			}
+		}
+		
+		
+		return Testsuite_New;
+	}
+	
+	public static int nextIntInRangeButExclude(int start, int end, int... excludes){
+		
+		Random r = new Random();
+		int rangeLength = end - start - excludes.length;
+	    int randomInt = r.nextInt(rangeLength) + start;
+
+	    for(int i = 0; i < excludes.length; i++) {
+	        if(excludes[i] > randomInt) {
+	            return randomInt;
+	        }
+
+	        randomInt++;
+	    }
+
+	    return randomInt;
+	}
+	
+	
 	Buchi eventuallyeventually(Predicate<IExplorableState> p, Predicate<IExplorableState> q) {
 		Buchi buchi = new Buchi() ;
 		buchi.withStates("S0","S1","accept") 
@@ -279,7 +410,11 @@ public class MCtest_Generation {
 	    .withTransition("S1", "accept", "q", S -> q.test(S));
 		return buchi ;
 	}
+	
+	
 	Buchi eventuallyeventually(Predicate<IExplorableState> p,Predicate<IExplorableState> q, Predicate<IExplorableState> r) {
+		
+		
 		Buchi buchi = new Buchi() ;
 		buchi.withStates("S0","S1","S2","accept") 
 		.withInitialState("S0")
@@ -291,4 +426,5 @@ public class MCtest_Generation {
 	    .withTransition("S2", "accept", "r", S -> r.test(S));
 		return buchi ;
 	}
+	
 }

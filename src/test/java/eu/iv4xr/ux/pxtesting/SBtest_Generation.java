@@ -41,6 +41,8 @@ import eu.iv4xr.framework.extensions.ltl.BuchiModelChecker;
 import eu.iv4xr.framework.extensions.ltl.IExplorableState;
 import eu.iv4xr.framework.extensions.ltl.ITransition;
 import eu.iv4xr.framework.extensions.ltl.BasicModelChecker.Path;
+import info.debatty.java.stringsimilarity.Jaccard;
+import info.debatty.java.stringsimilarity.JaroWinkler;
 import nl.uu.cs.aplib.utils.Pair;
 import eu.fbk.iv4xr.mbt.Main;
 
@@ -56,23 +58,36 @@ public class SBtest_Generation {
 	// use a logger to save output execution information
 	protected static final Logger logger = LoggerFactory.getLogger(Main.class);	
 	protected List <EFSMState> goalstates = new ArrayList<EFSMState>();
+	public String targetState;
 	public void setPropertiesMBT() {
 		
-		MBTProperties.LR_seed = 7652;
 		MBTProperties.LR_generation_mode = LR_random_mode.N_BUTTONS_DEPENDENT;
-		MBTProperties.LR_mean_buttons = 0.5;
-		MBTProperties.LR_n_rooms = 5;
-		MBTProperties.LR_n_doors = 5;
 		MBTProperties.SEARCH_BUDGET = 60;
-		MBTProperties.SUT_EFSM = "labrecruits.random_simple";
+		MBTProperties.SUT_EFSM = "labrecruits.random_extreme";
 		// there are some predefined configuration to pass to MBTProperties.SUT_EFSM
 		// "labrecruits.random_simple", "labrecruits.random_medium",
 		// "labrecruits.random_large"
-		MBTProperties.LR_n_goalFlags = 1 ;
 
-		MBTProperties.MODELCRITERION = new ModelCriterion[] {
-				ModelCriterion.STATE 
-		};
+		
+		MBTProperties.LR_mean_buttons = 0.5;
+		MBTProperties.LR_n_buttons = 40;
+		MBTProperties.LR_n_doors = 28;
+		MBTProperties.LR_seed = 3257439;
+		MBTProperties.LR_n_rooms=8;
+		MBTProperties.LR_n_goalFlags = 2 ;
+
+		// Set criterion
+				MBTProperties.MODELCRITERION = new ModelCriterion[] {
+						ModelCriterion.TRANSITION_FIX_END_STATE 
+				};
+				MBTProperties.TEST_FACTORY = MBTProperties.TestFactory.RANDOM_LENGTH_FIX_TARGET;
+				
+				// Set Target state
+				 targetState = "gf0";
+				MBTProperties.STATE_TARGET = targetState;
+				MBTProperties.MAX_LENGTH=35;
+				// Search budget in seconds
+				MBTProperties.SEARCH_BUDGET = 250;
 	}
 
 	/**
@@ -95,9 +110,71 @@ public class SBtest_Generation {
 		List<MBTChromosome> testChromosomes = generatedTests.getTestChromosomes();
 		return testChromosomes;
 	}
-	
-	//run a test for testgeneration using SBT developed by FBK
 	@Test
+	public void test1() throws Exception{
+		List<AbstractTestSequence> absTestsuite = new ArrayList<AbstractTestSequence>() ;
+		setPropertiesMBT();
+			if (!existsLabRecruitLevel()) {
+				fail();
+			}
+			// Optionally set output folder
+			// MBTProperties.OUTPUT_DIR = "outdir";
+			
+			// check that target state exists
+			EFSM efsm = EFSMFactory.getInstance().getEFSM();
+			assertTrue(efsm.getStates().contains(new EFSMState(targetState)));
+			// Generate result
+			GenerationStrategy generationStrategy = new SearchBasedStrategy<MBTChromosome>();
+			SuiteChromosome solution = generationStrategy.generateTests();
+			
+			String testFolder = new File(System.getProperty("user.dir")).getParent() + File.separator + "MBTtest";
+
+			int count = 1;
+			for (MBTChromosome testCase : solution.getTestChromosomes()) {
+				AbstractTestSequence testSequence = (AbstractTestSequence)testCase.getTestcase();
+				// check that the last state is target state
+				EFSMTransition lastTranstion = testSequence.getPath().getTransitionAt(testSequence.getPath().getLength()-1);
+				assertTrue(lastTranstion.getTgt().equals(new EFSMState(targetState)));
+				
+
+				if(!absTestsuite.contains(testSequence))
+				{
+					absTestsuite.add(testSequence);
+				}
+			
+				  
+				 
+				count++;
+			}
+
+			// choose a distance metric from Jaccard, Jaro- Winkler or Leveneshtien.
+			Distance dis=new Distance("jaro-winkler");
+			double totaldistance= dis.distance(absTestsuite);
+			System.out.println("Sub-testsuite size is: "+ absTestsuite.size());
+			System.out.println("total Distance: "+totaldistance);
+			
+
+			
+			// output folders
+			String rootFolder = new File(System.getProperty("user.dir")).getParent();
+			String modelFolder = testFolder + File.separator + "Model";
+			
+			// save generated tests
+			File testFolderFile = new File(testFolder);
+			if (!testFolderFile.exists()) {
+				testFolderFile.mkdirs();
+			}
+			File modelFolderFile = new File(modelFolder);
+			if (!modelFolderFile.exists()) {
+				modelFolderFile.mkdirs();
+			}
+			model_test_IOoperations io=new model_test_IOoperations();
+			io.writeTests(absTestsuite, testFolder);
+			io.writeModel(modelFolder); 
+
+	}
+	//run a test for testgeneration using SBT developed by FBK
+	//@Test
 	public void runSBTGenerationTest() {
 		
 		// set the parameters for the generation
@@ -144,7 +221,7 @@ public class SBtest_Generation {
 					absTestsuite.add(testcase);
 				}
 			}
-			break;
+			
 		}
 		
 		// output folders
@@ -166,5 +243,5 @@ public class SBtest_Generation {
 		io.writeModel(modelFolder);
 	}
 	
-	
+
 }
