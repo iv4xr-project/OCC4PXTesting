@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>eu.iv4xr.ux</groupId>
-  <artifactId>pxtesting</artifactId>
+  <artifactId>pxtestingPipeline</artifactId>
   <version>1.0</version>
 
   <name>pxtesting</name>
