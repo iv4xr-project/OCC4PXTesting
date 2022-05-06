@@ -256,28 +256,28 @@ public class Model_based_pxtesting {
 
             
             // run the python script called "mkgraph.py" for drawing graphs according to the saved .csv  
-			/*
-			 * String path=new File(new
-			 * File(System.getProperty("user.dir")).getAbsolutePath(),"mkgraph.py").
-			 * getAbsolutePath(); ProcessBuilder builder = new ProcessBuilder();
-			 * ProcessBuilder pb = new ProcessBuilder();
-			 * 
-			 * //sending the csvfile number, width and heights of the level as parameters.
-			 * builder.command("python",
-			 * path,""+i,""+lrsize.getheight(),""+lrsize.getwidth()); Process
-			 * p=builder.start(); BufferedReader bfr = new BufferedReader(new
-			 * InputStreamReader(p.getInputStream()));
-			 * 
-			 * System.out.println(".........start   visualization process........."); String
-			 * line = ""; while ((line = bfr.readLine()) != null){
-			 * System.out.println("Python Output: " + line); }
-			 * 
-			 * g.printGoalStructureStatus(); labRecruitsEnvironment.close() ; results +=
-			 * ">> tc-" + i + ", Duration: "+ t + ", goalstatus: " + g.getStatus() +
-			 * ", #fail: " + testAgent.getTestDataCollector().getNumberOfFailVerdictsSeen()
-			 * + ", #success: " +
-			 * testAgent.getTestDataCollector().getNumberOfPassVerdictsSeen() + "\n" ;
-			 */
+			
+			  String path=new File(new
+			  File(System.getProperty("user.dir")).getAbsolutePath(),"mkgraph.py").
+			  getAbsolutePath(); ProcessBuilder builder = new ProcessBuilder();
+			  ProcessBuilder pb = new ProcessBuilder();
+			  
+			  //sending the csvfile number, width and heights of the level as parameters.
+			  builder.command("python",
+			  path,""+i,""+lrsize.getheight(),""+lrsize.getwidth()); Process
+			  p=builder.start(); BufferedReader bfr = new BufferedReader(new
+			  InputStreamReader(p.getInputStream()));
+			  
+			  System.out.println(".........start   visualization process........."); String
+			  line = ""; while ((line = bfr.readLine()) != null){
+			  System.out.println("Python Output: " + line); }
+			  
+			  g.printGoalStructureStatus(); labRecruitsEnvironment.close() ; results +=
+			  ">> tc-" + i + ", Duration: "+ t + ", goalstatus: " + g.getStatus() +
+			  ", #fail: " + testAgent.getTestDataCollector().getNumberOfFailVerdictsSeen()
+			  + ", #success: " +
+			  testAgent.getTestDataCollector().getNumberOfPassVerdictsSeen() + "\n" ;
+			 
         }
         //set.writeModel(UdpateFolder); //fix its problem with efsm get instance
         
