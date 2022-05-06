@@ -1,7 +1,6 @@
 package eu.iv4xr.ux.pxtestingPipeline;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,7 +23,7 @@ public class Distance {
 
 		
 		switch (metric){
-			case "jaro-winkler":  mtr=new JaroWinkler();
+			case "jaro-winkler":  mtr=new JaroWinkler(-1);
 				break;
 				
 			case "levenshtein":   mtr=new Levenshtein();

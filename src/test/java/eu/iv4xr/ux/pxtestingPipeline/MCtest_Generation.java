@@ -17,6 +17,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import org.slf4j.Logger;
@@ -25,6 +27,7 @@ import eu.fbk.iv4xr.mbt.MBTProperties;
 import eu.fbk.iv4xr.mbt.MBTProperties.LR_random_mode;
 import eu.fbk.iv4xr.mbt.efsm.EFSM;
 import eu.fbk.iv4xr.mbt.efsm.EFSMFactory;
+import eu.fbk.iv4xr.mbt.efsm.EFSMPath;
 import eu.fbk.iv4xr.mbt.efsm.EFSMState;
 import eu.fbk.iv4xr.mbt.efsm.EFSMTransition;
 import eu.fbk.iv4xr.mbt.efsm.labRecruits.LabRecruitsRandomEFSM;
@@ -73,6 +76,8 @@ public class MCtest_Generation {
 	// use a logger to save output execution information
 	protected static final Logger logger = LoggerFactory.getLogger(Main.class);	
 	protected List <EFSMState> goalstates = new ArrayList<EFSMState>();
+	protected List<AbstractTestSequence> absTestsuite=null;
+	private BuchiModelChecker bmc;
 	public void setPropertiesMBT() {
 		
 		MBTProperties.LR_generation_mode = LR_random_mode.N_BUTTONS_DEPENDENT;
@@ -135,28 +140,38 @@ public class MCtest_Generation {
 		//List<AbstractTestSequence> absTestsuite=StateCoverage(efsm,goal);
 		
 		// buchi model checking for full-- transition-- coverage along with the goal coverage.
-		List<AbstractTestSequence> absTestsuite=TransitionCoverage(efsm,goal);
-		
-		
+		var starttime = System.currentTimeMillis() ;
+		 absTestsuite=TransitionCoverage(efsm,goal);
+		float duration = ((float) (System.currentTimeMillis() - starttime)) / 1000f ; 
+		// print stats:
+		System.out.println(">>> #nodes in efsm: " + efsm.getStates().size()) ;
+		System.out.println(">>> #transitions in efsm: " + efsm.getTransitons().size()) ;
+		System.out.println(">>> runtime(s): " + duration) ;
 		
 		// Measure Similarity btw test cases in a suite.
-		List<AbstractTestSequence> absTestsuite_Subset= AdaptiveRandomSampling(absTestsuite, 33);
-		List<AbstractTestSequence> absTestsuite_Rand= RandomSampling(absTestsuite, 33);
-
-		Distance dis=new Distance("jaro-winkler");
-		double jarodistance= dis.distance(absTestsuite_Rand);
-		System.out.println("Original-testsuite size is: "+ absTestsuite_Rand.size());
-		System.out.println(dis.mtr  + "  Distance: "+jarodistance);
-
-		 jarodistance= dis.distance(absTestsuite_Subset);
-		System.out.println("Sub-testsuite size is: "+ absTestsuite_Subset.size());
-		System.out.println(dis.mtr  + "  Distance: "+jarodistance);
-		 jarodistance= dis.distance(absTestsuite);
-			System.out.println("Sub-testsuite size is: "+ absTestsuite.size());
-			System.out.println(dis.mtr  + "  Distance: "+jarodistance);
+		
+		  List<AbstractTestSequence>  absTestsuite_Rand= RandomSampling(absTestsuite, 10	);
+		  List<AbstractTestSequence> absTestsuite_Subset=  AdaptiveRandomSampling(absTestsuite, 10  );
+		  
+		  
+			
+			  Distance dis=new Distance("jaro-winkler"); double jarodistance=
+			  dis.distance(absTestsuite_Rand);
+			  System.out.println("Rand-testsuite size is: "+ absTestsuite_Rand.size());
+			  System.out.println( " Rand Distance: "+jarodistance);
+			  
+			  jarodistance= dis.distance(absTestsuite_Subset);
+			  System.out.println("Sub-testsuite size is: "+ absTestsuite_Subset.size());
+			  System.out.println( "  Jaro Distance is "+jarodistance); jarodistance=
+			  dis.distance(absTestsuite);
+			  System.out.println("Original testsuite size is: "+ absTestsuite.size());
+			  System.out.println(dis.mtr + "  Distance: "+jarodistance);
+			 
 		// output folders
 		String rootFolder = new File(System.getProperty("user.dir")).getParent();
 		String testFolder = rootFolder + File.separator + "MCtest";
+		String selectedtestFolder = rootFolder + File.separator + "MCtest"+File.separator + "selectedtest";
+
 		String modelFolder = testFolder + File.separator + "Model";
 		
 		// save generated tests
@@ -169,9 +184,48 @@ public class MCtest_Generation {
 			modelFolderFile.mkdirs();
 		}
 		model_test_IOoperations io=new model_test_IOoperations();
-		io.writeTests(absTestsuite, testFolder);
+		io.writeTests(absTestsuite, testFolder, "MCtest");
+		io.writeTests(absTestsuite_Subset, selectedtestFolder,"MCtest");
+		
 		io.writeModel(modelFolder);
 	}
+	
+	@AfterEach 
+	public void test_transitioncoverage() throws IOException
+	{
+		List<String> notcoveredtr=new ArrayList();
+	    String rootFolder = new File(System.getProperty("user.dir")).getParent();
+        String testFolder = rootFolder + File.separator + "MCtest";
+		String modelFolder = testFolder + File.separator + "Model";
+		 model_test_IOoperations set=new model_test_IOoperations();
+	        EFSM efsm = set.loadModel(modelFolder);
+	        EFSMState goalstate = null;
+			int notcovered=0;
+	        for(var tr : efsm.getTransitons()) {
+	        	
+	        	if(absTestsuite.stream().anyMatch(c-> c.getPath().getTransitions().toString().contains(tr.toString())))
+	        	{
+	        		continue;
+	        	}
+	        	else
+	        	{
+	        		notcoveredtr.add(tr.toString());
+	        		notcovered++;
+	        	}
+			}
+	        
+	        System.out.println("# not covered transitions: "+notcovered+ "from : "+ efsm.getTransitons().size());
+			File txtFile = new File( testFolder + File.separator + "notcovered_transitions" + ".txt");
+			try {
+			
+				FileUtils.writeStringToFile(txtFile, notcoveredtr.toString(), Charset.defaultCharset());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+	}
+	
 	
 	InterfaceToIv4xrModelCheker.EFSMStateWrapper cast(IExplorableState S) { return (InterfaceToIv4xrModelCheker.EFSMStateWrapper) S ; }
 
@@ -179,10 +233,12 @@ public class MCtest_Generation {
 	private List<AbstractTestSequence> TransitionCoverage(EFSM efsm, Predicate<IExplorableState> goal) {
 	    
 		List<AbstractTestSequence> abstestsuite = new ArrayList<AbstractTestSequence>() ;
-		
+
 		for(var efsmtr : efsm.getTransitons())
 		{
-			
+			String notr= "gf0-{explore[EXPLORE];}->b8, gf0-{explore[EXPLORE];}->d4p, gf0-{explore[EXPLORE];}->d5m, gf0-{explore[EXPLORE];}->d6m";
+		  if(!abstestsuite.stream().anyMatch(c-> c.getPath().getTransitions().toString().contains(efsmtr.toString())) & !notr.contains(efsmtr.toString()))
+		  {
 			Predicate<IExplorableState> tr_Src = state -> {
 				InterfaceToIv4xrModelCheker.EFSMStateWrapper state_ = (InterfaceToIv4xrModelCheker.EFSMStateWrapper) state ;
 				return state_.conf.getState().getId().equals(((EFSMTransition)efsmtr).getSrc().getId()) ;
@@ -194,12 +250,7 @@ public class MCtest_Generation {
 			};
 			
 		   	//Buchi model checking	
-			BuchiModelChecker bmc = new BuchiModelChecker(new InterfaceToIv4xrModelCheker(efsm)) ;
 				
-			// invoke the MC:
-			var starttime = System.currentTimeMillis() ;
-				
-			float duration = ((float) (System.currentTimeMillis() - starttime)) / 1000f ; 
 			
 			
 			LTL<IExplorableState> notgf0=ltlNot(now("gf0",S -> cast(S).conf.getState().getId().equals("gf0")));
@@ -207,19 +258,20 @@ public class MCtest_Generation {
 					next(ltlAnd(now("n2",tr_Tgt),
 				notgf0.until(now("gf0",S -> cast(S).conf.getState().getId().equals("gf0")))))));
 			
-		
-			
+			// invoke the MC:
+
+			 bmc = new BuchiModelChecker(new InterfaceToIv4xrModelCheker(efsm)) ;
+
 			Buchi B = getBuchi(f) ;
-			Path<Pair<IExplorableState,String>> path = bmc.find( B, 30) ;
+			Path<Pair<IExplorableState,String>> path = findShortest( B, 46) ;
+			
 			
 			//Buchi
 			//Path<Pair<IExplorableState,String>> path = bmc.find( eventuallyeventually(tr_Src,tr_Tgt,goal), 20) ;
 			
-			// print stats:
-			System.out.println(">>> #nodes in efsm: " + efsm.getStates().size()) ;
-			System.out.println(">>> #transitions in efsm: " + efsm.getTransitons().size()) ;
-			System.out.println(">>> #concrete states and transitions:\n" + bmc.stats) ;
-			System.out.println(">>> runtime(s): " + duration) ;
+			//System.out.println(">>> #concrete states and transitions:\n" + bmc.stats) ;
+			System.out.println(">>> trnasition(s): " + efsmtr) ;
+
 			if(path!=null) {
 				System.out.println(">>> Solution length: " + path.path.size()) ;
 			}
@@ -245,11 +297,41 @@ public class MCtest_Generation {
 				{
 					abstestsuite.add(absTestSeq);
 				}
+			  }
 			}
 		}
+
+		
 		return abstestsuite;
 		
 	}
+
+	public Path<Pair<IExplorableState,String>> findShortest(Buchi B , int maxDepth) {
+
+	         if (maxDepth < 0)
+	             throw new IllegalArgumentException() ;
+	         int lowbound = 0 ;
+	         int upbound = maxDepth+1 ;
+
+	         Path<Pair<IExplorableState,String>> bestpath = null ;
+	         while (upbound > lowbound) {
+	             int mid = lowbound + (upbound - lowbound)/2 ;
+	             Path<Pair<IExplorableState,String>> path = bmc.find(B,mid) ;
+	             if (path != null) {
+	                 upbound = mid ;
+	                 bestpath = path ;
+	             }
+	             else {
+	                 if(mid==lowbound) {
+	                    upbound = mid ;
+	                 }
+	                 else {
+	                     lowbound = mid ;
+	                 }
+	             }
+	         }
+	         return bestpath ;
+	     }
 
 	private List<AbstractTestSequence> StateCoverage(EFSM efsm, Predicate<IExplorableState> goal) {
 		
@@ -280,6 +362,7 @@ public class MCtest_Generation {
 				System.out.println(">>> #transitions in efsm: " + efsm.getTransitons().size()) ;
 				System.out.println(">>> #concrete states and transitions:\n" + bmc.stats) ;
 				System.out.println(">>> runtime(s): " + duration) ;
+
 				if(path!=null) {
 					System.out.println(">>> Solution length: " + path.path.size()) ;
 				}
@@ -330,56 +413,75 @@ public class MCtest_Generation {
 		
 		Random r = new Random();
 		List<AbstractTestSequence> Testsuite_New= new ArrayList<AbstractTestSequence>();
-		 
+		//HashMap<Integer,AbstractTestSequence> candidate_set=new HashMap<Integer,AbstractTestSequence>();
+
 		int rand1=r.nextInt(Testsuite.size()-1);
 		Testsuite_New.add(Testsuite.get(rand1));
-		 while(Testsuite_New.size()!=size)
+		//candidate_set.put( rand1,Testsuite.get(rand1));
+		while(Testsuite_New.size()!=size)
 		{
-		
-			int additional=-1;
-			int[] unique = r.ints(0, Testsuite.size()-1).distinct().limit(20).filter(c->c!= rand1).toArray();
-			if(unique.length!=20)
-			{
-				additional=nextIntInRangeButExclude(0,Testsuite.size()-1, rand1);
-			}
+			
+			int[] unique = r.ints(0, Testsuite.size()-1).distinct().filter(c->!Testsuite_New.equals(c)).limit(30).toArray();
+			
+			int candidate=-1;
 			HashMap<Integer,Double> dismap=new HashMap<Integer,Double>();
-
 			for(var u : unique)
 			{
 				JaroWinkler jar=new JaroWinkler();
 				double totaldistance=0;
+				double mindistance=Integer.MAX_VALUE;;
+				double maxdistance=-1;
+				
 				for (var l : Testsuite_New)
 				{
 
 					totaldistance+=jar.distance(Testsuite.get(u).toString(), l.toString());
 					
-
+					
+					  double distance=jar.distance(Testsuite.get(u).toString(), l.toString());
+					  if(distance< mindistance) mindistance=distance;
+					 
+					 
+					  
+					 
 				}
 				
 				dismap.put(u, (double) totaldistance);
-			}
-			if(additional!=-1)
-			{
-				JaroWinkler jar=new JaroWinkler();
-				double totaldistance=0;
-				for (var l : Testsuite_New)
-				{
-					totaldistance+=jar.distance(Testsuite.get(additional).toString(), l.toString());
-				}
+
 				
-				dismap.put(additional, (double) totaldistance);
 			}
-			double maxdistance=dismap.values().stream().max(Double::compare).get();
+
+			 
 			
-			if(maxdistance!=0)
-			{				
-				List <Integer> maxindex=dismap.entrySet().stream().filter(c->c.getValue()==maxdistance ).map(Map.Entry::getKey).collect(Collectors.toList());
-				Testsuite_New.add(Testsuite.get(maxindex.get(0)));
-			}
+			//Testsuite_New.add(Testsuite.get(candidate));
+			/*
+			 * if(additional!=-1) { JaroWinkler jar=new JaroWinkler(); double
+			 * totaldistance=0; for (var l : Testsuite_New) {
+			 * totaldistance+=jar.distance(Testsuite.get(additional).toString(),
+			 * l.toString()); }
+			 * 
+			 * dismap.put(additional, (double) totaldistance); }
+			 */
+			
+			
+			
+			 double maxdistance=dismap.values().stream().max(Double::compare).get();
+			  
+				
+				  if(maxdistance!=0) { List <Integer>
+				  maxindex=dismap.entrySet().stream().filter(c->c.getValue()==maxdistance )
+				  .map(Map.Entry::getKey).collect(Collectors.toList());
+				  Testsuite_New.add(Testsuite.get(maxindex.get(0)));
+				 }
+			  //candidate_set.put( maxindex.get(0),Testsuite.get(maxindex.get(0)));
+			 					
+			
 		}
-		
-		
+        
+		//List<AbstractTestSequence> list = new ArrayList<AbstractTestSequence>(candidate_set.values());
+
 		return Testsuite_New;
+		
 	}
 	
 	public static int nextIntInRangeButExclude(int start, int end, int... excludes){

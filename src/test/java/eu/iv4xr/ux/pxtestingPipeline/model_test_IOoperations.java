@@ -151,15 +151,15 @@ public class model_test_IOoperations {
 		}
 
 	}
-	protected void writeTests(List<AbstractTestSequence> solution, String testFolder) {
+	protected void writeTests(List<AbstractTestSequence> solution, String testFolder,String testtype) {
 		// make sure tests folder exists
 		File testsFolder = new File(testFolder);
 		testsFolder.mkdirs();
 		int count = 1;
 		for (AbstractTestSequence testCase : solution) {
-			String dotFileName = testFolder + File.separator + "test_" + count + ".dot";
-			String txtFileName = testFolder + File.separator + "test_" + count + ".txt";
-			String serFileName = testFolder + File.separator + "test_" + count + ".ser";
+			String dotFileName = testFolder + File.separator + testtype+"_" + count + ".dot";
+			String txtFileName = testFolder + File.separator + testtype +"_"+ count + ".txt";
+			String serFileName = testFolder + File.separator + testtype +"_"+ count + ".ser";
 			File dotFile = new File(dotFileName);
 			File txtFile = new File(txtFileName);
 			try {
@@ -186,7 +186,7 @@ public class model_test_IOoperations {
 			List<File> files = org.apache.maven.shared.utils.io.FileUtils.getFiles(new File(testsDir), "*.ser", "");
 			for (File file : files) {
 				AbstractTestSequence test = TestSerializationUtils.loadTestSequence(file.getAbsolutePath());
-				MBTChromosome chromosome = new MBTChromosome<>();
+				MBTChromosome chromosome = new MBTChromosome();
 				chromosome.setTestcase(test);
 				suite.addTest(chromosome);
 

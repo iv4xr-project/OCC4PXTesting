@@ -15,6 +15,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import org.slf4j.Logger;
@@ -46,20 +47,22 @@ import info.debatty.java.stringsimilarity.Jaccard;
 import info.debatty.java.stringsimilarity.JaroWinkler;
 import nl.uu.cs.aplib.utils.Pair;
 import eu.fbk.iv4xr.mbt.Main;
-
 /**
  * In this test I'll show how to - use mbt to create a Lab Recruits level -
  * generate a test suite on it - serialize the level and the test suite on the
  * disk
- * 
+ * @author sansari
  * @author prandi
+ * 
  */
 public class SBtest_Generation {
 
 	// use a logger to save output execution information
 	protected static final Logger logger = LoggerFactory.getLogger(Main.class);	
 	protected List <EFSMState> goalstates = new ArrayList<EFSMState>();
+	protected List<AbstractTestSequence> absTestsuite;
 	public String targetState;
+	public int notcovered=159;
 	public void setPropertiesMBT() {
 		
 		MBTProperties.LR_generation_mode = LR_random_mode.N_BUTTONS_DEPENDENT;
@@ -77,18 +80,16 @@ public class SBtest_Generation {
 		MBTProperties.LR_n_rooms=8;
 		MBTProperties.LR_n_goalFlags = 2 ;
 
-		// Set criterion
-				MBTProperties.MODELCRITERION = new ModelCriterion[] {
-						ModelCriterion.TRANSITION_FIX_END_STATE 
-				};
-				MBTProperties.TEST_FACTORY = MBTProperties.TestFactory.RANDOM_LENGTH_FIX_TARGET;
-				
-				// Set Target state
-				 targetState = "gf0";
-				MBTProperties.STATE_TARGET = targetState;
-				MBTProperties.MAX_LENGTH=35;
-				// Search budget in seconds
-				MBTProperties.SEARCH_BUDGET = 250;
+		
+		  // Set criterion
+		   MBTProperties.MODELCRITERION = new ModelCriterion[] {
+		  ModelCriterion.TRANSITION_FIX_END_STATE }; MBTProperties.TEST_FACTORY =
+		  MBTProperties.TestFactory.RANDOM_LENGTH_FIX_TARGET;
+		  
+		  // Set Target state
+		  targetState = "gf0"; 
+		  MBTProperties.STATE_TARGET =targetState; MBTProperties.MAX_LENGTH=100; //used to be 35 which is min toget some path // Search budget in seconds MBTProperties.SEARCH_BUDGET = 250;
+		 
 	}
 
 	/**
@@ -111,9 +112,54 @@ public class SBtest_Generation {
 		List<MBTChromosome> testChromosomes = generatedTests.getTestChromosomes();
 		return testChromosomes;
 	}
-	@Test
-	public void test1() throws Exception{
-		List<AbstractTestSequence> absTestsuite = new ArrayList<AbstractTestSequence>() ;
+	
+	 @Test
+	 public void runMultipleTests() throws Exception {
+	     
+	    	
+	    	 while(notcovered>4)
+	    	 {
+	    		 notcovered=0;
+	    		 SBTestGeneration_FBKtrancoverage();
+	 	 	    String rootFolder = new File(System.getProperty("user.dir")).getParent();
+		         String testFolder = rootFolder + File.separator + "SBTtest";
+		 		String modelFolder = testFolder + File.separator + "Model";
+		 		 model_test_IOoperations set=new model_test_IOoperations();
+		 	        EFSM efsm = set.loadModel(modelFolder);
+		 			List<String> notcoveredtr=new ArrayList();
+		 	        EFSMState goalstate = null;
+		 			 
+		 	        for(var tr : efsm.getTransitons()) {
+		 	        	
+		 	        	if(absTestsuite.stream().anyMatch(c-> c.getPath().getTransitions().toString().contains(tr.toString())))
+		 	        	{
+		 	        		continue;
+		 	        	}
+		 	        	else
+		 	        	{
+		 	        		notcoveredtr.add(tr.toString());
+		 	        		notcovered++;
+		 	        	}
+		 			}
+		 	        System.out.println("# not covered transitions: "+notcovered+ "from : "+ efsm.getTransitons().size());
+		 	        File txtFile = new File( testFolder + File.separator + "SBTnotcovered_transitions" + ".txt");
+		 			try {
+		 			
+		 				FileUtils.writeStringToFile(txtFile, notcoveredtr.toString(), Charset.defaultCharset());
+		 			} catch (IOException e) {
+		 				// TODO Auto-generated catch block
+		 				e.printStackTrace();
+		 			}
+	    	 }
+
+
+	 	
+
+	     
+	 }
+	
+	public void SBTestGeneration_FBKtrancoverage() throws Exception{
+		absTestsuite = new ArrayList<AbstractTestSequence>() ;
 		setPropertiesMBT();
 			if (!existsLabRecruitLevel()) {
 				fail();
@@ -128,7 +174,7 @@ public class SBtest_Generation {
 			GenerationStrategy generationStrategy = new SearchBasedStrategy<MBTChromosome>();
 			SuiteChromosome solution = generationStrategy.generateTests();
 			
-			String testFolder = new File(System.getProperty("user.dir")).getParent() + File.separator + "MBTtest";
+			String testFolder = new File(System.getProperty("user.dir")).getParent() + File.separator + "SBTtest";
 
 			int count = 1;
 			for (MBTChromosome testCase : solution.getTestChromosomes()) {
@@ -155,11 +201,14 @@ public class SBtest_Generation {
 			System.out.println("total Distance: "+totaldistance);
 			
 
-			
+			  List<AbstractTestSequence> absTestsuite_Subset= eu.iv4xr.ux.pxtestingPipeline
+					  .MCtest_Generation.RandomSampling(absTestsuite, 30 );
+
 			// output folders
 			String rootFolder = new File(System.getProperty("user.dir")).getParent();
 			String modelFolder = testFolder + File.separator + "Model";
-			
+			String selectedtestFolder = testFolder+File.separator + "selectedtest";
+
 			// save generated tests
 			File testFolderFile = new File(testFolder);
 			if (!testFolderFile.exists()) {
@@ -170,11 +219,13 @@ public class SBtest_Generation {
 				modelFolderFile.mkdirs();
 			}
 			model_test_IOoperations io=new model_test_IOoperations();
-			io.writeTests(absTestsuite, testFolder);
+			io.writeTests(absTestsuite, testFolder, "SBTtest");
+			io.writeTests(absTestsuite_Subset, selectedtestFolder,"SBTtest");
+
 			io.writeModel(modelFolder); 
 
 	}
-	//run a test for testgeneration using SBT developed by FBK
+	//run a test for testgeneration using my written transition coverage
 	//@Test
 	public void runSBTGenerationTest() {
 		
@@ -240,9 +291,43 @@ public class SBtest_Generation {
 			modelFolderFile.mkdirs();
 		}
 		model_test_IOoperations io=new model_test_IOoperations();
-		io.writeTests(absTestsuite, testFolder);
+		io.writeTests(absTestsuite, testFolder, "SBTtest");
 		io.writeModel(modelFolder);
 	}
 	
+	//@AfterEach 
+	public void test_transitioncoverage()
+	{
+		
+	    String rootFolder = new File(System.getProperty("user.dir")).getParent();
+        String testFolder = rootFolder + File.separator + "SBTtest";
+		String modelFolder = testFolder + File.separator + "Model";
+		 model_test_IOoperations set=new model_test_IOoperations();
+	        EFSM efsm = set.loadModel(modelFolder);
+			List<String> notcoveredtr=new ArrayList();
+	        EFSMState goalstate = null;
+			 notcovered=0;
+	        for(var tr : efsm.getTransitons()) {
+	        	
+	        	if(absTestsuite.stream().anyMatch(c-> c.getPath().getTransitions().toString().contains(tr.toString())))
+	        	{
+	        		continue;
+	        	}
+	        	else
+	        	{
+	        		notcoveredtr.add(tr.toString());
+	        		notcovered++;
+	        	}
+			}
+	        System.out.println("# not covered transitions: "+notcovered+ "from : "+ efsm.getTransitons().size());
+	        File txtFile = new File( testFolder + File.separator + "SBTnotcovered_transitions" + ".txt");
+			try {
+			
+				FileUtils.writeStringToFile(txtFile, notcoveredtr.toString(), Charset.defaultCharset());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	}
 
 }

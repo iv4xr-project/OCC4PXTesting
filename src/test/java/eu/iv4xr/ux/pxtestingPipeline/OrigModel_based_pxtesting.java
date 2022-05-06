@@ -259,7 +259,7 @@ public class OrigModel_based_pxtesting {
 			List<File> files = org.apache.maven.shared.utils.io.FileUtils.getFiles(new File(testsDir), "*.ser", "");
 			for (File file : files) {
 				AbstractTestSequence test = TestSerializationUtils.loadTestSequence(file.getAbsolutePath());
-				MBTChromosome chromosome = new MBTChromosome<>();
+				MBTChromosome chromosome = new MBTChromosome();
 				chromosome.setTestcase(test);
 				suite.addTest(chromosome);
 

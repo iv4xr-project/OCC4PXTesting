@@ -21,7 +21,7 @@ import world.LabEntity;
 
 public class PlayerOneCharacterization extends UserCharacterization {
 	
-	public static Goal questIsCompleted = new Goal("quest is completed").withSignificance(10) ;
+	public static Goal questIsCompleted = new Goal("quest is completed").withSignificance(8) ;
 	public static Goal gotAsMuchPointsAsPossible = new Goal("get as much points as possible").withSignificance(5) ;
 	static String KeyDoor;
 
@@ -178,9 +178,12 @@ public class PlayerOneCharacterization extends UserCharacterization {
 	// various rules:
 	
 	public int desirabilityAppraisalRule(Goals_Status goals_status, String eventName, String goalName) {
-		if(eventName.equals(OuchEventName)) return -150 ;
+		if(eventName.equals(OuchEventName) &&goals_status.goalStatus(questIsCompleted.name).likelihood==0) 
+			return -800 ;
+		if(eventName.equals(OuchEventName)) 
+		return -100 ;
 		if(eventName.equals(OpeningADoorEventName) && goalName.equals(questIsCompleted.name)) {
-			   return 800 ;
+			   return 400 ;
 		}
 		if(eventName.equals(OpeningADoorEventName) && goalName.equals(gotAsMuchPointsAsPossible.name)) {
 			   return 400 ;
@@ -200,6 +203,5 @@ public class PlayerOneCharacterization extends UserCharacterization {
 
 	public int intensityThresholdRule(Emotion.EmotionType etyp) { return 0 ; }
 		
-
 
 }

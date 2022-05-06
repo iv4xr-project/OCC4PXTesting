@@ -16,9 +16,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
 
-
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -78,20 +80,21 @@ import world.BeliefState;
  * 
  * @author sansari
  */
-
+ 
 // to run this, first you need to create the level model by running MC/SBtest_Generation. 
 public class Model_based_pxtesting {
 
 	protected EFSM efsm_copy;
     // context variables
 	public HashMap<Long,HashSet<Emotion>> map=new HashMap<Long,HashSet<Emotion>>();
-	
+
 
 	@Test
     public void runGeneratedTests() throws IOException {
 
 	    String rootFolder = new File(System.getProperty("user.dir")).getParent();
         String testFolder = rootFolder + File.separator + "Combinedtest";
+        String save=testFolder+ File.separator + "selectedtest";
         String modelFolder = testFolder + File.separator + "Model";
         String UdpateFolder = testFolder + File.separator + "UpdatedModel";
         String labRecruitesExeRootDir = rootFolder + File.separator + "iv4xrDemo";
@@ -107,14 +110,49 @@ public class Model_based_pxtesting {
 			}
 		} ;
 		
+		
         // load tests from file
+		List<AbstractTestSequence> absTestsuite=new ArrayList<AbstractTestSequence>();
         SuiteChromosome loadedSolution = set.parseTests(testFolder);
-        
+        loadedSolution.getTestChromosomes().forEach(c->absTestsuite.add((AbstractTestSequence)c.getTestcase()));
+        //List<AbstractTestSequence> absTestsuite_new=eu.iv4xr.ux.pxtestingPipeline.MCtest_Generation.AdaptiveRandomSampling(absTestsuite, 40);
+		//model_test_IOoperations io=new model_test_IOoperations();
+        //set.writeTests(absTestsuite_new, save, "test");
+       // loadedSolution=null;
+       //absTestsuite_new.forEach(c->loadedSolution.addTest((MBTChromosome)c.getPath()));
 		// choose a distance metric from Jaccard, Jaro- Winkler or Leveneshtien.
-        Distance dis=new Distance("jaccard");
+        Distance dis=new Distance("jaro-winkler");
 		double totaldistance= dis.distance(loadedSolution);
 		System.out.println("MC-testsuite size is: "+ loadedSolution.size());
 		System.out.println("total Distance: "+totaldistance);
+		//Scanner in = new Scanner(System.in);
+		//String name = in.nextLine();
+		var starttime = System.currentTimeMillis() ;
+		List<String> notcoveredtr=new ArrayList();
+        //EFSMState goalstate = null;
+		int notcovered=0;
+		  for(var tr : efsm_copy.getTransitons()) {
+			 // if(absTestsuite_new.stream().anyMatch(c-> c.getPath().toString().contains(tr.toString())))
+			  if(loadedSolution.getTestChromosomes().stream().anyMatch(c-> c.getTestcase().toString().contains(tr.toString())))
+	        	{
+	        		continue;
+	        	}
+	        	else
+	        	{
+	        		notcoveredtr.add(tr.toString());
+	        		notcovered++;
+	        	}
+			}
+	        System.out.println("# not covered transitions: "+notcovered+ "from : "+ efsm_copy.getTransitons().size());
+	        File txtFile = new File( testFolder + File.separator + "SBTnotcovered_transitions" + ".txt");
+			try {
+			
+				FileUtils.writeStringToFile(txtFile, notcoveredtr.toString(), Charset.defaultCharset());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
 		
         // open the server
         LabRecruitsTestServer testServer = new LabRecruitsTestServer(false,
@@ -126,11 +164,13 @@ public class Model_based_pxtesting {
         
         // convert test cases in loadedSolution to goal structure: use the test case executor to convert
         LabRecruitsTestSuiteExecutor lrExecutor = new LabRecruitsTestSuiteExecutor(rootFolder, testFolder, modelFolder, null);
-        
+        		
         // iterate over test case and convert to goals
         String results = "" ;
         for (int i = 1; i <= loadedSolution.size(); i++) {
             AbstractTestSequence testcase = (AbstractTestSequence) loadedSolution.getTestChromosome(i-1).getTestcase();
+           // AbstractTestSequence testcase = absTestsuite_new.get(i-1);
+
             // the system returns a list of goals that can be sequentialized with SEQ
             LabRecruitsEnvironment labRecruitsEnvironment = new LabRecruitsEnvironment(lrCfg);
             var dataCollector = new TestDataCollector();
@@ -197,7 +237,7 @@ public class Model_based_pxtesting {
                     	 break;
                      }
                  }
-                if (t>1000) {
+                if (t>500) {
                     break ;
                 }
                 try {
@@ -208,37 +248,41 @@ public class Model_based_pxtesting {
                     e.printStackTrace();
                 }
                 t++ ;
-             }
-            
+             }          
+             //int x=43+i;
             //save triggered emotions in the efsm model.
             exportToCSV(emodata.csvData_goalQuestIsCompleted, "data_goalQuestCompleted_"+i+".csv");
-            exportToCSV(emodata.csvData_goalGetMuchPoints, "data_goalGetMuchPoints_"+i+".csv");
+            //exportToCSV(emodata.csvData_goalGetMuchPoints, "data_goalGetMuchPoints_"+i+".csv");
 
             
             // run the python script called "mkgraph.py" for drawing graphs according to the saved .csv  
-            String path=new File(new File(System.getProperty("user.dir")).getAbsolutePath(),"mkgraph.py").getAbsolutePath();
-			ProcessBuilder builder = new ProcessBuilder(); 
-			ProcessBuilder pb = new ProcessBuilder();
-			
-			//sending the csvfile number, width and heights of the level as parameters.
-			builder.command("python", path,""+i,""+lrsize.getheight(),""+lrsize.getwidth());
-			Process p=builder.start();
-			BufferedReader bfr = new BufferedReader(new InputStreamReader(p.getInputStream()));
-	
-			System.out.println(".........start   visualization process.........");  
-		    String line = "";     
-		    while ((line = bfr.readLine()) != null){
-			      System.out.println("Python Output: " + line);
-		    }
-            
-            g.printGoalStructureStatus();
-            labRecruitsEnvironment.close() ;           
-            results += ">> tc-" + i + ", Duration: "+ t + ", goalstatus: " + g.getStatus() 
-               + ", #fail: " + testAgent.getTestDataCollector().getNumberOfFailVerdictsSeen()
-               + ", #success: " + testAgent.getTestDataCollector().getNumberOfPassVerdictsSeen() + "\n" ;
-          
+			/*
+			 * String path=new File(new
+			 * File(System.getProperty("user.dir")).getAbsolutePath(),"mkgraph.py").
+			 * getAbsolutePath(); ProcessBuilder builder = new ProcessBuilder();
+			 * ProcessBuilder pb = new ProcessBuilder();
+			 * 
+			 * //sending the csvfile number, width and heights of the level as parameters.
+			 * builder.command("python",
+			 * path,""+i,""+lrsize.getheight(),""+lrsize.getwidth()); Process
+			 * p=builder.start(); BufferedReader bfr = new BufferedReader(new
+			 * InputStreamReader(p.getInputStream()));
+			 * 
+			 * System.out.println(".........start   visualization process........."); String
+			 * line = ""; while ((line = bfr.readLine()) != null){
+			 * System.out.println("Python Output: " + line); }
+			 * 
+			 * g.printGoalStructureStatus(); labRecruitsEnvironment.close() ; results +=
+			 * ">> tc-" + i + ", Duration: "+ t + ", goalstatus: " + g.getStatus() +
+			 * ", #fail: " + testAgent.getTestDataCollector().getNumberOfFailVerdictsSeen()
+			 * + ", #success: " +
+			 * testAgent.getTestDataCollector().getNumberOfPassVerdictsSeen() + "\n" ;
+			 */
         }
         //set.writeModel(UdpateFolder); //fix its problem with efsm get instance
+        
+		float duration = ((float) (System.currentTimeMillis() - starttime)) / 1000f ; 
+		System.out.println("Emotion system execution time with "+loadedSolution.size() + "is : "+ duration);  
         System.out.println("" + results) ;
         testServer.close();
         

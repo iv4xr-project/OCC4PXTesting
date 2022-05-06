@@ -118,13 +118,13 @@ public class Combinedsuite_diversitytest {
 
 		// Set criterion
 				MBTProperties.MODELCRITERION = new ModelCriterion[] {
-						ModelCriterion.TRANSITION_FIX_END_STATE 
+						//ModelCriterion.TRANSITION_FIX_END_STATE 
 				};
-				MBTProperties.TEST_FACTORY = MBTProperties.TestFactory.RANDOM_LENGTH_FIX_TARGET;
+				//MBTProperties.TEST_FACTORY = MBTProperties.TestFactory.RANDOM_LENGTH_FIX_TARGET;
 				
 				// Set Target state
 				 targetState = "gf0";
-				MBTProperties.STATE_TARGET = targetState;
+				//MBTProperties.STATE_TARGET = targetState;
 				MBTProperties.MAX_LENGTH=35;
 				// Search budget in seconds
 				MBTProperties.SEARCH_BUDGET = 250;
@@ -462,16 +462,16 @@ public class Combinedsuite_diversitytest {
 		
 
 
-
-//		System.out.println("testsuite size is: "+ loadedSolution.size());
-//		System.out.println(" Jaro-Winkler Distance: "+jarodistance);
-//		Distance levdis=new Distance("levenshtein");
-//		double levdistance= levdis.distance(loadedSolution);
-//		System.out.println(" Levenshtein Distance: "+levdistance);
-//		 dp.combineset_Winkler_distance=jarodistance;
-//		 dp.combineset_Leveneshtein_distance=levdistance;
-		//Scanner in = new Scanner(System.in);
-	    //in.nextLine();
+		double jarodistance= dis.distance(loadedSolution);
+		System.out.println("testsuite size is: "+ loadedSolution.size());
+		System.out.println(" Jaro-Winkler Distance: "+jarodistance);
+		Distance levdis=new Distance("levenshtein");
+		double levdistance= levdis.distance(loadedSolution);
+		System.out.println(" Levenshtein Distance: "+levdistance);
+		 dp.combineset_Winkler_distance=jarodistance;
+		 dp.combineset_Leveneshtein_distance=levdistance;
+		Scanner in = new Scanner(System.in);
+	    in.nextLine();
 		
 		
 	}
