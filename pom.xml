@@ -61,11 +61,7 @@
     		<artifactId>iv4xrdemo</artifactId>
     		<version>2.3.4c</version>    
         </dependency>            
-<!--   		  <dependency>   -->
-<!--     		<groupId>com.github.iv4xr-project</groupId> -->
-<!-- 	    	<artifactId>iv4xr-mbt</artifactId> -->
-<!-- 	    	<version>1.0.2</version> -->
-<!--    		</dependency> -->
+
     <dependency>
    		 <groupId>com.github.iv4xr-project</groupId>
 		 <artifactId>iv4xr-mbt</artifactId>

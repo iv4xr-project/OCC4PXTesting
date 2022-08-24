@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import alice.tuprolog.Var;
 import eu.fbk.iv4xr.mbt.testcase.AbstractTestSequence;
+import eu.fbk.iv4xr.mbt.testcase.MBTChromosome;
 import eu.fbk.iv4xr.mbt.testsuite.SuiteChromosome;
 import info.debatty.java.stringsimilarity.Jaccard;
 import info.debatty.java.stringsimilarity.JaroWinkler;
@@ -54,7 +56,6 @@ public class Distance {
 		System.out.print("#pairs: "+ count);
 		return total;
 	}
-	
 	
 	public double distance(SuiteChromosome loadedSolution) {
 

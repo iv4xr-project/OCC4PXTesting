@@ -154,17 +154,17 @@ def mkColdMap(filename,width,height):
 # To build the graph depicting how emotions develop over time: (uncomment)
 #
 
-mkTimeProgressionGraph('data_goalQuestCompleted_{1}.csv'.format("",int(sys.argv[1])))
+mkTimeProgressionGraph('data_goalQuestCompleted_{1}.csv'.format("",str(sys.argv[1])))
 
 
 plt.clf()
-mkHeatMap('data_goalQuestCompleted_{1}.csv'.format("",int(sys.argv[1])),int(sys.argv[2]),int(sys.argv[3]))
+mkHeatMap('data_goalQuestCompleted_{1}.csv'.format("",str(sys.argv[1])),int(sys.argv[2]),int(sys.argv[3]))
 plt.clf()
-mkColdMap('data_goalQuestCompleted_{1}.csv'.format("",int(sys.argv[1])),int(sys.argv[2]),int(sys.argv[3]))
+mkColdMap('data_goalQuestCompleted_{1}.csv'.format("",str(sys.argv[1])),int(sys.argv[2]),int(sys.argv[3]))
 
 #points graphics
 plt.clf()
-mkTimeProgressionGraph('data_goalGetMuchPoints_{1}.csv'.format("",int(sys.argv[1]))) 
+mkTimeProgressionGraph('data_goalGetMuchPoints_{1}.csv'.format("",str(sys.argv[1]))) 
 
 plt.clf()
 print("graphs are saved in the project directory")

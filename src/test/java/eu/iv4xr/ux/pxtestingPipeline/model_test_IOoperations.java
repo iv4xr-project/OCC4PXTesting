@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.function.Function;
 
@@ -180,15 +181,17 @@ public class model_test_IOoperations {
 	 * @param testsDir
 	 * @return
 	 */
-	protected SuiteChromosome parseTests(String testsDir) {
-		SuiteChromosome suite = new SuiteChromosome();
+	protected Map<String,MBTChromosome> parseTests(String testsDir) {
+		//SuiteChromosome suite = new SuiteChromosome();
+		Map<String,MBTChromosome> suite=new HashMap<String,MBTChromosome>();
 		try {
 			List<File> files = org.apache.maven.shared.utils.io.FileUtils.getFiles(new File(testsDir), "*.ser", "");
 			for (File file : files) {
 				AbstractTestSequence test = TestSerializationUtils.loadTestSequence(file.getAbsolutePath());
 				MBTChromosome chromosome = new MBTChromosome();
 				chromosome.setTestcase(test);
-				suite.addTest(chromosome);
+				//suite.addTest(chromosome);
+				suite.put(file.getName().replaceFirst(".ser", ""), chromosome);
 
 			}
 		} catch (IOException e) {

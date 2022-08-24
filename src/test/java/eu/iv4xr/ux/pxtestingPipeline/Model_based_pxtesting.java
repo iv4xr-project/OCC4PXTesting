@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Scanner;
 
 import org.apache.commons.io.FileUtils;
@@ -72,7 +73,7 @@ import static eu.iv4xr.ux.pxtestingPipeline.PlayerOneCharacterization.gotAsMuchP
 import static eu.iv4xr.ux.pxtestingPipeline.PlayerOneCharacterization.questIsCompleted;
 import static nl.uu.cs.aplib.AplibEDSL.* ;
 import world.BeliefState;
-
+import java.util.*;
 /**
  *  load all test cases from the disk as a test suite - transform a test suite into a goal structure.
 
@@ -85,18 +86,13 @@ import world.BeliefState;
 public class Model_based_pxtesting {
 
 	protected EFSM efsm_copy;
-    // context variables
-	public HashMap<Long,HashSet<Emotion>> map=new HashMap<Long,HashSet<Emotion>>();
-
 
 	@Test
     public void runGeneratedTests() throws IOException {
 
 	    String rootFolder = new File(System.getProperty("user.dir")).getParent();
         String testFolder = rootFolder + File.separator + "Combinedtest";
-        String save=testFolder+ File.separator + "selectedtest";
         String modelFolder = testFolder + File.separator + "Model";
-        String UdpateFolder = testFolder + File.separator + "UpdatedModel";
         String labRecruitesExeRootDir = rootFolder + File.separator + "iv4xrDemo";
         
 		//get goal state			
@@ -112,28 +108,31 @@ public class Model_based_pxtesting {
 		
 		
         // load tests from file
-		List<AbstractTestSequence> absTestsuite=new ArrayList<AbstractTestSequence>();
-        SuiteChromosome loadedSolution = set.parseTests(testFolder);
-        loadedSolution.getTestChromosomes().forEach(c->absTestsuite.add((AbstractTestSequence)c.getTestcase()));
+        Map<String,MBTChromosome> loadedSolution = set.parseTests(testFolder);
+		SuiteChromosome loadedSuitechromosome = new SuiteChromosome(); 
+        loadedSolution.values().forEach(c->loadedSuitechromosome.addTest(c));
+        
+        
+        //List<AbstractTestSequence> absTestsuite=new ArrayList<AbstractTestSequence>();
+        //loadedSolution.getTestChromosomes().forEach(c->absTestsuite.add((AbstractTestSequence)c.getTestcase()));
         //List<AbstractTestSequence> absTestsuite_new=eu.iv4xr.ux.pxtestingPipeline.MCtest_Generation.AdaptiveRandomSampling(absTestsuite, 40);
 		//model_test_IOoperations io=new model_test_IOoperations();
         //set.writeTests(absTestsuite_new, save, "test");
        // loadedSolution=null;
        //absTestsuite_new.forEach(c->loadedSolution.addTest((MBTChromosome)c.getPath()));
-		// choose a distance metric from Jaccard, Jaro- Winkler or Leveneshtien.
+		
+        // choose a distance metric from Jaccard, Jaro- Winkler or Leveneshtien.
         Distance dis=new Distance("jaro-winkler");
-		double totaldistance= dis.distance(loadedSolution);
-		System.out.println("MC-testsuite size is: "+ loadedSolution.size());
+		double totaldistance= dis.distance(loadedSuitechromosome);
+		System.out.println("MC-testsuite size is: "+ loadedSuitechromosome.size());
 		System.out.println("total Distance: "+totaldistance);
-		//Scanner in = new Scanner(System.in);
-		//String name = in.nextLine();
+		
 		var starttime = System.currentTimeMillis() ;
 		List<String> notcoveredtr=new ArrayList();
         //EFSMState goalstate = null;
 		int notcovered=0;
 		  for(var tr : efsm_copy.getTransitons()) {
-			 // if(absTestsuite_new.stream().anyMatch(c-> c.getPath().toString().contains(tr.toString())))
-			  if(loadedSolution.getTestChromosomes().stream().anyMatch(c-> c.getTestcase().toString().contains(tr.toString())))
+			  if(loadedSolution.containsValue(tr.toString()))
 	        	{
 	        		continue;
 	        	}
@@ -159,18 +158,18 @@ public class Model_based_pxtesting {
                 Platform.PathToLabRecruitsExecutable(labRecruitesExeRootDir));
         // set the configuration of the server 
         // level file name is hard coded in writeModel but can be changed
-        LabRecruitsConfig lrCfg = new LabRecruitsConfig("LabRecruits_level", modelFolder);
-        levelsize lrsize= new levelsize(CSVlevelImport.ImportFromCSV("LabRecruits_level", modelFolder));    
+        LabRecruitsConfig lrCfg = new LabRecruitsConfig("Wave-the-flag_MRF_f0_z0_51", modelFolder);
+        levelsize lrsize= new levelsize(CSVlevelImport.ImportFromCSV("Wave-the-flag_MRF_f0_z0_51", modelFolder));    
         
         // convert test cases in loadedSolution to goal structure: use the test case executor to convert
         LabRecruitsTestSuiteExecutor lrExecutor = new LabRecruitsTestSuiteExecutor(rootFolder, testFolder, modelFolder, null);
         		
         // iterate over test case and convert to goals
         String results = "" ;
-        for (int i = 1; i <= loadedSolution.size(); i++) {
-            AbstractTestSequence testcase = (AbstractTestSequence) loadedSolution.getTestChromosome(i-1).getTestcase();
-           // AbstractTestSequence testcase = absTestsuite_new.get(i-1);
+        for(Entry<String, MBTChromosome> test: loadedSolution.entrySet()) {
 
+        	 AbstractTestSequence testcase = (AbstractTestSequence) test.getValue().getTestcase();
+        	 
             // the system returns a list of goals that can be sequentialized with SEQ
             LabRecruitsEnvironment labRecruitsEnvironment = new LabRecruitsEnvironment(lrCfg);
             var dataCollector = new TestDataCollector();
@@ -186,7 +185,7 @@ public class Model_based_pxtesting {
             goals = set.instrumentTestCase(testAgent,testcase,goals) ;
             GoalStructure g =SEQ(goals.toArray(new GoalStructure[goals.size()]));
             testAgent.setGoal(g) ;
-            System.out.println(">> Testing task: " + i + ", #=" + goals.size()) ;
+            System.out.println(">> Testing task: " + test.getKey() + ", #=" + goals.size()) ;
             System.out.println(">> " + testcase ) ;    
             
             // add an event-producer to the test agent so that it produce events for
@@ -216,11 +215,6 @@ public class Model_based_pxtesting {
                  else {
                      for (Message m : testAgent.getSyntheticEventsProducer().currentEvents) {
                          eas.update( new LREvent(m.getMsgName()), t);
-                         if(!eas.newEmotions.isEmpty())
-                         {
-                        	 
-                         map.put(testAgent.getState().worldmodel.timestamp, eas.newEmotions);
-                         }
                          
                      }
                  }
@@ -237,7 +231,7 @@ public class Model_based_pxtesting {
                     	 break;
                      }
                  }
-                if (t>500) {
+                if (t>1300) {
                     break ;
                 }
                 try {
@@ -249,9 +243,8 @@ public class Model_based_pxtesting {
                 }
                 t++ ;
              }          
-             //int x=43+i;
             //save triggered emotions in the efsm model.
-            exportToCSV(emodata.csvData_goalQuestIsCompleted, "data_goalQuestCompleted_"+i+".csv");
+            exportToCSV(emodata.csvData_goalQuestIsCompleted, "data_goalQuestCompleted_"+ test.getKey()+".csv");
             //exportToCSV(emodata.csvData_goalGetMuchPoints, "data_goalGetMuchPoints_"+i+".csv");
 
             
@@ -264,7 +257,7 @@ public class Model_based_pxtesting {
 			  
 			  //sending the csvfile number, width and heights of the level as parameters.
 			  builder.command("python",
-			  path,""+i,""+lrsize.getheight(),""+lrsize.getwidth()); Process
+			  path,""+ test.getKey(),""+lrsize.getheight(),""+lrsize.getwidth()); Process
 			  p=builder.start(); BufferedReader bfr = new BufferedReader(new
 			  InputStreamReader(p.getInputStream()));
 			  
@@ -272,15 +265,15 @@ public class Model_based_pxtesting {
 			  line = ""; while ((line = bfr.readLine()) != null){
 			  System.out.println("Python Output: " + line); }
 			  
-			  g.printGoalStructureStatus(); labRecruitsEnvironment.close() ; results +=
-			  ">> tc-" + i + ", Duration: "+ t + ", goalstatus: " + g.getStatus() +
+			  //g.printGoalStructureStatus();
+			  labRecruitsEnvironment.close() ; results +=
+			  ">> tc-" + test.getKey() + ", Duration: "+ t + ", goalstatus: " + g.getStatus() +
 			  ", #fail: " + testAgent.getTestDataCollector().getNumberOfFailVerdictsSeen()
 			  + ", #success: " +
 			  testAgent.getTestDataCollector().getNumberOfPassVerdictsSeen() + "\n" ;
 			 
         }
-        //set.writeModel(UdpateFolder); //fix its problem with efsm get instance
-        
+                
 		float duration = ((float) (System.currentTimeMillis() - starttime)) / 1000f ; 
 		System.out.println("Emotion system execution time with "+loadedSolution.size() + "is : "+ duration);  
         System.out.println("" + results) ;

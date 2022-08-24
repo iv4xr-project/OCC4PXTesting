@@ -63,9 +63,9 @@ private static Datapoint creatDatapoint(String[] metadata) {
 	float time = Integer.parseInt(metadata[0]);
 	float x = Float.parseFloat(metadata[1]);
 	float y = Float.parseFloat(metadata[2]);
-	float score = Float.parseFloat(metadata[7]);
-	float losthealth = Float.parseFloat(metadata[8]);
-	float remainedhealth = Float.parseFloat(metadata[9]);
+	float score = Float.parseFloat(metadata[9]);
+	float losthealth = Float.parseFloat(metadata[10]);
+	float remainedhealth = Float.parseFloat(metadata[11]);
 	
 	Set<Emotion> emo=new HashSet<>();
 	
@@ -73,11 +73,16 @@ private static Datapoint creatDatapoint(String[] metadata) {
 	Emotion joy= new Emotion(EmotionType.Joy,null,0,(int)(800f*Float.parseFloat(metadata[4])));
 	Emotion satisfaction= new Emotion(EmotionType.Satisfaction,null,0,(int)(800f*Float.parseFloat(metadata[5])));
 	Emotion fear=new Emotion(EmotionType.Fear,null,0,(int)(800f*Float.parseFloat(metadata[6])));
+	Emotion distress=new Emotion(EmotionType.Disappointment,null,0,(int)(800f*Float.parseFloat(metadata[7])));
+	Emotion disap=new Emotion(EmotionType.Disappointment,null,0,(int)(800f*Float.parseFloat(metadata[8])));
+
 	emo.add(hope);
 	emo.add(joy);
 	emo.add(satisfaction);
 	emo.add(fear);
+	emo.add(distress);
+	emo.add(disap);
 	
-	return new Datapoint(time,x,y,emo,score,losthealth,remainedhealth); 
+	return new Datapoint(x,y,time,emo,score,losthealth,remainedhealth); 
 }
 }
