@@ -1,4 +1,0 @@
-Agent Agent1 has died.
-Client requested a DISCONNECT
-Loading level 'Wave-the-flag_MRF_f0_z48_17'
-Finished loading level
