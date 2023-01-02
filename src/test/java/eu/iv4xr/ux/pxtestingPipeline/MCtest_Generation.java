@@ -170,7 +170,7 @@ public class MCtest_Generation {
 		// output folders
 		String rootFolder = new File(System.getProperty("user.dir")).getParent();
 		String testFolder = rootFolder + File.separator + "MCtest";
-		String selectedtestFolder = rootFolder + File.separator + "MCtest"+File.separator + "selectedtest";
+		//String selectedtestFolder = rootFolder + File.separator + "MCtest"+File.separator + "selectedtest";
 
 		String modelFolder = testFolder + File.separator + "Model";
 		
@@ -185,7 +185,7 @@ public class MCtest_Generation {
 		}
 		model_test_IOoperations io=new model_test_IOoperations();
 		io.writeTests(absTestsuite, testFolder, "MCtest");
-		io.writeTests(absTestsuite_Subset, selectedtestFolder,"MCtest");
+		//io.writeTests(absTestsuite_Subset, selectedtestFolder,"MCtest");
 		
 		io.writeModel(modelFolder);
 	}

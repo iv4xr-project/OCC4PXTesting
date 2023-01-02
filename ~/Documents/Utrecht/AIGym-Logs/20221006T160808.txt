@@ -1,0 +1,3 @@
+Agent Agent1 has died.
+Loading level 'NWave-the-flag_MAMRF_f0_z24_51'
+Finished loading level

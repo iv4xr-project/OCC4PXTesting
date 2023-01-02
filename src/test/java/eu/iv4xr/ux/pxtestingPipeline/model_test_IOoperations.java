@@ -181,7 +181,7 @@ public class model_test_IOoperations {
 	 * @param testsDir
 	 * @return
 	 */
-	protected Map<String,MBTChromosome> parseTests(String testsDir) {
+	public Map<String,MBTChromosome> parseTests(String testsDir) {
 		//SuiteChromosome suite = new SuiteChromosome();
 		Map<String,MBTChromosome> suite=new HashMap<String,MBTChromosome>();
 		try {

@@ -278,7 +278,7 @@ public class SBtest_Generation {
 		
 		// output folders
 		String rootFolder = new File(System.getProperty("user.dir")).getParent();
-		String testFolder = rootFolder + File.separator + "MBTtest";
+		String testFolder = rootFolder + File.separator + "SBTTtest";
 		String modelFolder = testFolder + File.separator + "Model";
 		
 		// save generated tests
@@ -319,14 +319,14 @@ public class SBtest_Generation {
 	        		notcovered++;
 	        	}
 			}
-	        System.out.println("# not covered transitions: "+notcovered+ "from : "+ efsm.getTransitons().size());
-	        File txtFile = new File( testFolder + File.separator + "SBTnotcovered_transitions" + ".txt");
-			try {
-			
-				FileUtils.writeStringToFile(txtFile, notcoveredtr.toString(), Charset.defaultCharset());
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+	        System.out.println("number of not covered transitions in the generated test suite : "+notcovered+ "from : "+ efsm.getTransitons().size());
+	       // File txtFile = new File( testFolder + File.separator + "SBTnotcovered_transitions" + ".txt");
+//			try {
+//			
+//				FileUtils.writeStringToFile(txtFile, notcoveredtr.toString(), Charset.defaultCharset());
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
 			}
 	}
 

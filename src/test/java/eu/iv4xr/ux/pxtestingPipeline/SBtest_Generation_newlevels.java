@@ -91,7 +91,7 @@ public class SBtest_Generation_newlevels {
 			
 			MBTProperties.LR_n_goalFlags = 16 ;
 
-			MBTProperties.LR_n_fires=5;
+			//MBTProperties.LR_n_fires=5;
 			  // Set criterion
 			   MBTProperties.MODELCRITERION = new ModelCriterion[] {
 			  ModelCriterion.TRANSITION_FIX_END_STATE }; MBTProperties.TEST_FACTORY =

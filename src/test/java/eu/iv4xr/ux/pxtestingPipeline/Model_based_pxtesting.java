@@ -158,8 +158,8 @@ public class Model_based_pxtesting {
                 Platform.PathToLabRecruitsExecutable(labRecruitesExeRootDir));
         // set the configuration of the server 
         // level file name is hard coded in writeModel but can be changed
-        LabRecruitsConfig lrCfg = new LabRecruitsConfig("Wave-the-flag_MRF_f0_z0_51", modelFolder);
-        levelsize lrsize= new levelsize(CSVlevelImport.ImportFromCSV("Wave-the-flag_MRF_f0_z0_51", modelFolder));    
+        LabRecruitsConfig lrCfg = new LabRecruitsConfig("NWave-the-flag_MAW2WF_f0_z72_34", modelFolder);
+        levelsize lrsize= new levelsize(CSVlevelImport.ImportFromCSV("NWave-the-flag_MAW2WF_f0_z72_34", modelFolder));    
         
         // convert test cases in loadedSolution to goal structure: use the test case executor to convert
         LabRecruitsTestSuiteExecutor lrExecutor = new LabRecruitsTestSuiteExecutor(rootFolder, testFolder, modelFolder, null);
@@ -231,7 +231,7 @@ public class Model_based_pxtesting {
                     	 break;
                      }
                  }
-                if (t>1300) {
+                if (t>900) {
                     break ;
                 }
                 try {
@@ -250,27 +250,27 @@ public class Model_based_pxtesting {
             
             // run the python script called "mkgraph.py" for drawing graphs according to the saved .csv  
 			
-			  String path=new File(new
-			  File(System.getProperty("user.dir")).getAbsolutePath(),"mkgraph.py").
-			  getAbsolutePath(); ProcessBuilder builder = new ProcessBuilder();
-			  ProcessBuilder pb = new ProcessBuilder();
-			  
+//			  String path=new File(new
+//			  File(System.getProperty("user.dir")).getAbsolutePath(),"mkgraph.py").
+//			  getAbsolutePath(); ProcessBuilder builder = new ProcessBuilder();
+//			  ProcessBuilder pb = new ProcessBuilder();
+//			  
 			  //sending the csvfile number, width and heights of the level as parameters.
-			  builder.command("python",
-			  path,""+ test.getKey(),""+lrsize.getheight(),""+lrsize.getwidth()); Process
-			  p=builder.start(); BufferedReader bfr = new BufferedReader(new
-			  InputStreamReader(p.getInputStream()));
-			  
-			  System.out.println(".........start   visualization process........."); String
-			  line = ""; while ((line = bfr.readLine()) != null){
-			  System.out.println("Python Output: " + line); }
-			  
-			  //g.printGoalStructureStatus();
-			  labRecruitsEnvironment.close() ; results +=
-			  ">> tc-" + test.getKey() + ", Duration: "+ t + ", goalstatus: " + g.getStatus() +
-			  ", #fail: " + testAgent.getTestDataCollector().getNumberOfFailVerdictsSeen()
-			  + ", #success: " +
-			  testAgent.getTestDataCollector().getNumberOfPassVerdictsSeen() + "\n" ;
+//			  builder.command("python",
+//			  path,""+ test.getKey(),""+lrsize.getheight(),""+lrsize.getwidth()); Process
+//			  p=builder.start(); BufferedReader bfr = new BufferedReader(new
+//			  InputStreamReader(p.getInputStream()));
+//			  
+//			  System.out.println(".........start   visualization process........."); String
+//			  line = ""; while ((line = bfr.readLine()) != null){
+//			  System.out.println("Python Output: " + line); }
+//			  
+//			  //g.printGoalStructureStatus();
+//			  labRecruitsEnvironment.close() ; results +=
+//			  ">> tc-" + test.getKey() + ", Duration: "+ t + ", goalstatus: " + g.getStatus() +
+//			  ", #fail: " + testAgent.getTestDataCollector().getNumberOfFailVerdictsSeen()
+//			  + ", #success: " +
+//			  testAgent.getTestDataCollector().getNumberOfPassVerdictsSeen() + "\n" ;
 			 
         }
                 

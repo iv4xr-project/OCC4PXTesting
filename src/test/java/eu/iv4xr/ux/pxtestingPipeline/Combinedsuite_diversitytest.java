@@ -421,7 +421,7 @@ public class Combinedsuite_diversitytest {
         model_test_IOoperations set=new model_test_IOoperations();
 
 	    // load tests from file
-	    SuiteChromosome loadedSolution = set.parseTests(testFolder1);
+	    SuiteChromosome loadedSolution = (SuiteChromosome) set.parseTests(testFolder1);
 //	    SuiteChromosome loadedSolution2 = set.parseTests(testFolder2);
 //	    for(var l: loadedSolution2.getTestChromosomes())
 //	    {
